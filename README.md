@@ -91,7 +91,7 @@ var PersonComponent = React.createClass({
 
 ```
 
-### bindToArrayState(key,path)
+### bindToArrayState(key,pathExpression)
 
 It enables binding to collection-based structures (array). It enables to add and remove items.
 
@@ -102,6 +102,8 @@ It enables binding to collection-based structures (array). It enables to add and
  ```
 
 # Examples
+
+[Try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
 
 We create hobby form to capture data from user in this form
 
@@ -131,14 +133,6 @@ We create hobby form to capture data from user in this form
 }
 
 ```
-
-
-<iframe style="border: 1px solid #999;width: 100%; height: 200px"
-        src="http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/?t=code?f=script.jsx" frameborder="0"
-        allowfullscreen="allowfullscreen">
-  Loading plunk...
-</iframe>
-
 
 ### bindTo(parent,pathExpression)
 

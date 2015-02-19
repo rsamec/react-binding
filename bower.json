@@ -6,7 +6,7 @@
     "Roman Samec <roman.samec2@gmail.com>"
   ],
   "description": "BindToMixin - react data binding for complex objects and arrays.",
-  "main": "react-binding",
+  "main": "dist/react-binding",
   "moduleType": [
     "globals",
     "node"
