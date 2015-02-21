@@ -10,17 +10,17 @@ React-binding comes with [BindToMixin](https://github.com/rsamec/react-binding) 
 
 # Get started
 
-* [node package manager][npm].
+* [node package manager][npm]
 ``` js
 npm install react-binding
 ```
 
-* [client-side code package manager][bower].
+* [client-side code package manager][bower]
 ``` js
 bower install react-binding
 ```
 
-*  [bundling with browserify][browserify]
+* [bundling with browserify][browserify]
 ``` js
 npm install -g browserify
 npm install reactify
@@ -98,170 +98,54 @@ It enables binding to collection-based structures (array). It enables to add and
 +   binding to array
 
 ``` js
- <HobbyList model={this.bindArrayToState("data","Hobbies")} />
- ```
+    <HobbyList model={this.bindArrayToState("data","Hobbies")} />
+```
+
++   access items (this.props.model.items)
+
+``` js
+    var HobbyList = React.createClass({
+        render: function() {
+            if (this.props.model.items === undefined) return <span>There are no items.</span>;
+
+            var hobbies = this.props.model.items.map(function(hobby, index) {
+                return (
+                    <Hobby model={hobby} key={index} onDelete={this.handleDelete} />
+                );
+            },this);
+            return (
+                <div>{hobbies}</div>
+            );
+        }
+    });
+
+```
++   add new items (this.props.model.add(newItem?))
+``` js
+     handleAdd: function(){
+            return this.props.model.add();
+     },
+```
++   remove exiting items  (this.props.model.props.delete(item))
+``` js
+     handleDelete: function(hobby){
+            return this.props.model.remove(hobby);
+     },
+```
 
 # Examples
 
-[Try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
-
-We create hobby form to capture data from user in this form
-
-``` js
-{
-  "Person": {
-    "LastName": "Smith",
-    "FirstName": "Adam",
-    "Contact": {
-      "Email": "smith@gmail.com"
-    }
-  },
-  "Hobbies": [
-      {
-        "HobbyName": "Bandbington",
-        "Frequency": "Daily",
-        "Paid": true,
-        "Recommendation": true
-      },
-      {
-        "HobbyName": "Cycling",
-        "Frequency": "Daily",
-        "Recommendation": false,
-        "Paid": false
-      }
-    ]
-}
-
-```
-
-### bindTo(parent,pathExpression)
-
-``` js
-var Form = React.createClass({
-    mixins:[BindToMixin],
-    getInitialState: function() {
-        return { data: {}};
-    },
-    render: function() {
-        return (
-            <div>
-               <input type='text' valueLink={this.bindToState("data","Employee.FirstName")} />
-               <input type='text' valueLink={this.bindToState("data","Employee.LastName")} />
-               <input type='text' valueLink={this.bindToState("data","Employee.Contact.Email")} />
-            </div>
-        );
-    }
-});
-```
-
-
-### bindTo(parent,pathExpression)
-
-We create reusable component PersonComponent with 3 fields and use twice in our form.
-
-``` js
-var Form = React.createClass({
-    mixins:[BindToMixin],
-    getInitialState: function() {
-        return { data: {}};
-    },
-    render: function() {
-        return (
-            <div>
-                <PersonComponent personModel={this.bindToState("data","Employee")} />
-                <PersonComponent personModel={this.bindToState("data","Deputy")} />
-            </div>
-        );
-    }
-});
-
-
-var PersonComponent = React.createClass({
-  mixins:[BindToMixin],
-  render: function() {
-    return (
-      <div>
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"FirstName")} />
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"LastName")} />
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"Contact.Email")} />
-      </div>
-    );
-  }
-});
-
-```
-
-### bindToArrayState(key,path)
-
-We create list of hobbies with add and remove buttons.
-
-``` js
-
-var HobbyForm = React.createClass({
-    mixins:[BindToMixin],
-    getInitialState: function() {
-        return { data: {}};
-    },
-    addHobby:function(e){
-      if (this.state.data.Hobbies === undefined)
-        this.state.data.Hobbies = []
-      this.state.data.Hobbies.push({});
-      this.setState({data:this.state.data})
-    },
-    render: function() {
-        return (
-            <div className="commentBox">
-                <div >
-                  <button onClick={this.addHobby}>Add</button>
-                  <HobbyList model={this.bindArrayToState("data","Hobbies")} />
-                </div>
-            </div>
-        );
-    }
-});
-var HobbyList = React.createClass({
-    handleDelete: function(hobby){
-        return this.props.model.remove(hobby);
-    },
-    render: function() {
-        if (this.props.model.Items === undefined) return <span>There are no items.</span>;
-
-        var nodes = this.props.model.items.map(function(hobby, index) {
-            return (
-                <Hobby model={hobby} key={index} onDelete={this.handleDelete} />
-            );
-        },this);
-        return (
-            <div>
-                {nodes}
-            </div>
-        );
-    }
-});
-var Hobby = React.createClass({
-    mixins:[BindToMixin],
-    handleClick: function(e){
-        e.preventDefault();
-        return this.props.onDelete(this.props.model.value);
-    },
-    render: function() {
-        return (
-            <div className="comment">
-              <input type='text' valueLink={this.bindTo(this.props.model,"HobbyName")} />
-              <button value="Delete" onClick={this.handleClick}>Delete</button>
-            </div>
-        );
-    }
-});
+[hobby form - try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
 
 ```
 
 ## Contact
 
-For more information on react-binding please check out http://angularjs.org/
+For more information on react-binding please check out [blog post][blog]
 
 [git]: http://git-scm.com/
 [bower]: http://bower.io
 [npm]: https://www.npmjs.org/
 [node]: http://nodejs.org
 [browserify]: http://browserify.org/
+[blog]: http://rsamec.github.io/
