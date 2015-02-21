@@ -10,17 +10,17 @@ React-binding comes with [BindToMixin](https://github.com/rsamec/react-binding) 
 
 # Get started
 
-Node - CommonJS
+* [node package manager][npm].
 ``` js
 npm install react-binding
 ```
 
-Browser - Bower
+* [client-side code package manager][bower].
 ``` js
 bower install react-binding
 ```
 
-Bundling CommonJS with Browserify
+*  [bundling with browserify][browserify]
 ``` js
 npm install -g browserify
 npm install reactify
@@ -255,3 +255,13 @@ var Hobby = React.createClass({
 });
 
 ```
+
+## Contact
+
+For more information on react-binding please check out http://angularjs.org/
+
+[git]: http://git-scm.com/
+[bower]: http://bower.io
+[npm]: https://www.npmjs.org/
+[node]: http://nodejs.org
+[browserify]: http://browserify.org/

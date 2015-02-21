@@ -1,7 +1,7 @@
 {
   "name": "react-binding",
-  "version": "0.1.0",
-  "description": "BindToMixin - react data binding for complex objects and arrays",
+  "version": "0.3.0",
+  "description": "BindToMixin - react two-way data binding for complex objects and arrays",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -25,6 +25,13 @@
   "homepage": "https://github.com/rsamec/react-binding",
   "devDependencies": {
     "expect.js": "^0.3.1",
+    "gulp": "^3.8.11",
+    "gulp-regex-replace": "^0.2.3",
+    "gulp-rename": "^1.2.0",
+    "gulp-typedoc": "^1.0.6",
+    "gulp-typescript": "^2.4.2",
+    "gulp-uglify": "^1.1.0",
+    "merge2": "^0.3.1",
     "mocha": "^2.1.0",
     "tsd": "^0.5.7"
   }

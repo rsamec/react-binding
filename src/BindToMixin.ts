@@ -1,24 +1,31 @@
+/**
+ * Two-way data binding for React.
+ */
 module DataBinding{
-    /*
+    /**
      It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
      */
     export interface IPathObjectBinder{
-        /*
+        /**
          It gets value at the passed path expression.
          */
         getValue(path:string)
-        /*
+        /**
          It sets the passed value at the passed path.
          */
         setValue(path:string, value:any);
     }
-    /*
-     It represents function that is called when there is a change.
+    /**
+     It represents change notification function. It is called whenever there is a change.
      */
     export interface INotifyChange {():void};
+
+    /**
+     It represents change notifikcation function with changed value. It supports valueLink interface
+     */
     export interface IRequestChange {(any):void};
 
-    /*
+    /**
      It represents binding to property at source object at a given path.
      */
     export interface IPathObjectBinding{
@@ -32,7 +39,7 @@ module DataBinding{
         path?:any;
     }
 
-    /*
+    /**
      It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
      */
     export class PathObjectBinder implements  IPathObjectBinder{
@@ -74,7 +81,7 @@ module DataBinding{
         }
     }
 
-    /*
+    /**
      It represents binding to property at source object at a given path.
      */
     export class PathObjectBinding implements IPathObjectBinding{
@@ -84,7 +91,7 @@ module DataBinding{
             this.source = new PathObjectBinder(this.sourceObject);
         }
 
-        public get rquestChange():IRequestChange {return (value)=>{this.value=value;}}
+        public get requestChange():IRequestChange {return (value)=>{this.value=value;}}
         public get value(){
             if (this.path === undefined) return this.sourceObject;
             return this.source.getValue(this.path);}
@@ -99,7 +106,7 @@ module DataBinding{
             if (this.notifyChange !== undefined) this.notifyChange();
         }
     }
-    /*
+    /**
      It represents binding to property at source object at a given path.
      */
     export class ArrayObjectBinding{
@@ -136,7 +143,7 @@ module DataBinding{
         }
     }
 
-    /*
+    /**
      It represents binding to relative path for parent object.
      */
     export class PathParentBinding implements IPathObjectBinding{
@@ -165,12 +172,50 @@ module DataBinding{
             if (this.notifyChange !== undefined) this.notifyChange();
         }
     }
+    /**
+     * React [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) is an easy way to express two-way data binding in React.
+     *
+     * React-binding comes with [BindToMixin](https://github.com/rsamec/react-binding) as extension to [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) two-way binding that supports binding to
+     *     *
+     *  +   object properties with path expression (Person.FirstName, Person.LastName, Person.Contact.Email)
+     *  +   complex objects (json) with nested properties
+     *  +   collection-based structures - arrays and lists
+     */
     export class BindToMixin{
 
         private createStateKeySetter(component,key){
             return () => component.setState({key:component.state[key]});
         }
 
+        /**
+         * It enables to bind to object property with path expression
+         * +   using [valueLink](http://facebook.github.io/react/docs/two-way-binding-helpers.html)
+         * ``` js
+         * <input type='text' valueLink={this.bindToState("data","Employee.Contact.Email")} />
+         * ```
+         *
+         *  +   without [valueLink](http://facebook.github.io/react/docs/two-way-binding-helpers.html)
+         *  ``` js
+         * <TextBoxInput model={this.bindToState("data","Employee.Contact.Email")} />
+         * ```
+         *
+         * ``` js
+         * var TextBoxInput = React.createClass({
+        *   render: function() {
+        *       var valueModel = this.props.model;
+        *       var handleChange = function(e){
+        *       valueModel.value = e.target.value;
+        *   }
+        *   return (
+        *       <input type='text' onChange={handleChange} value={valueModel.value} />
+        *   )}
+        * });
+         *  ```
+         *
+         * @param key - property name in state (this.state[key])
+         * @param path - expression to bind to property
+         * @returns {DataBinding.PathObjectBinding}
+         */
         public bindToState(key, path):IPathObjectBinding {
             return new PathObjectBinding(
                 this["state"][key],
@@ -180,10 +225,61 @@ module DataBinding{
             );
         }
 
+        /**
+         * It enables to bind to complex object with nested properties and reuse bindings in components.
+         *
+         * +   binding to state at root level
+         *
+         * ``` js
+         *  <PersonComponent personModel={this.bindToState("data","Employee")} />
+         *  <PersonComponent personModel={this.bindToState("data","Deputy")} />
+         * ```
+         *
+         * +   binding to parent
+         *
+         * ``` js
+         *   <input type='text' valueLink={this.bindTo(this.props.personModel,"Contact.Email")} />
+         * ```
+         *
+         * +  reuse bindings in component
+         *
+         * ``` js
+         * var PersonComponent = React.createClass({
+         *   mixins:[BindToMixin],
+         *   render: function() {
+         *     return (
+         *       <div>
+         *         <input type='text' valueLink={this.bindTo(this.props.personModel,"FirstName")} />
+         *         <input type='text' valueLink={this.bindTo(this.props.personModel,"LastName")} />
+         *         <input type='text' valueLink={this.bindTo(this.props.personModel,"Contact.Email")} />
+         *       </div>
+         *     );
+         *   }
+         * });
+         *
+         * ```
+         *
+         * @param parent - the parent object
+         * @param path - expression to bind to property
+         * @returns {DataBinding.PathParentBinding}
+         */
         public bindTo(parent, path): IPathObjectBinding {
             return new PathParentBinding(parent, path);
         }
 
+        /**
+         * It enables binding to collection-based structures (array). It enables to add and remove items.
+         *
+         * +   binding to array
+         *
+         * ``` js
+         *  <HobbyList model={this.bindArrayToState("data","Hobbies")} />
+         * ```
+         *
+         * @param key - property name in state (this.state[key]) - it must be array
+         * @param path - expression to array to bind to property
+         * @returns {DataBinding.ArrayObjectBinding}
+         */
         public bindArrayToState(key, path):ArrayObjectBinding {
             return new ArrayObjectBinding(
                 this["state"][key],

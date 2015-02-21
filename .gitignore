@@ -15,6 +15,7 @@ coverage
 
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
+.gulp
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
@@ -32,3 +33,6 @@ typings
 
 #JetBrains WebStorm
 .idea
+
+#TypeDoc
+out
