@@ -146,11 +146,9 @@ It enables binding to collection-based structures (array). It enables to add and
 
 [hobby form - try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
 
-```
-
 ## Contact
 
-For more information on react-binding please check out my blog http://rsamec.github.io/.
+For more information on react-binding please check out [my blog][blog].
 
 [git]: http://git-scm.com/
 [bower]: http://bower.io
