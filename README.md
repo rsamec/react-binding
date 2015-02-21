@@ -2,11 +2,20 @@
 
 React [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) is an easy way to express two-way data binding in React.
 
-React-binding comes with [BindToMixin](https://github.com/rsamec/react-binding) as extension to [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) two-way binding that supports binding to
+React-binding comes with [BindToMixin](https://github.com/rsamec/react-binding) as extension to [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html).
 
-+   object properties with path expression (Person.FirstName, Person.LastName, Person.Contact.Email)
+Two-way binding support for:
+
++   object properties with path expression
+    +   this.bindToState("data","Employee.FirstName");
+    +   this.bindToState("data","Employee.Contact.Email");
 +   complex objects (json) with nested properties
+    +   this.bindTo(employee,"FirstName");
+    +   this.bindTo(employee,"Contact.Email");
 +   collection-based structures - arrays and lists
+    +   this.props.model.items.map(function(item){})
+    +   this.props.model.add()
+    +   this.props.model.remove(item)
 
 # Get started
 
@@ -141,7 +150,7 @@ It enables binding to collection-based structures (array). It enables to add and
 
 ## Contact
 
-For more information on react-binding please check out [blog post][blog]
+For more information on react-binding please check out my blog http://rsamec.github.io/.
 
 [git]: http://git-scm.com/
 [bower]: http://bower.io
