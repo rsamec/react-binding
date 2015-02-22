@@ -1,9 +1,7 @@
 # react-binding
 
-React [LinkedStateMixin][valueLink] is an easy way to express two-way data binding in React.
-
-React-binding is lightweight mixin - [BindToMixin](https://github.com/rsamec/react-binding).
-It offers two-way data binding support for:
+React-binding is lightweight mixin for two-way data binding in [React][react].
+[BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
 +   object properties with path expression (dot notation)
     +   this.bindToState("data","Employee.FirstName");
@@ -19,15 +17,16 @@ It offers two-way data binding support for:
 +   supports for "value/requestChange" interface also to enable to use [ReactLink][valueLink] attribute
     +   valueLink={this.bindTo(employee,"FirstName")}
 +   usable with any css frameworks
-    +   [react-bootstrap][reactBoostrap]
+    +   [react-bootstrap][reactBootstrap]
     +   [material-ui][materialUi]
 
-# Base principle
+# Basic principle
 
 Each bindTo return and uses interface called "value/onChange".
-Each bindTo component is passed a value (to render it to UI) as well as setter to a value that triggers a re-render (typically at the central location).
-The re-render is done at the component where you bind to state (bindToState, bindArrayToState) is called.
-BindTo can be nested - composed to support components composition (concatenates path according to parent-child relationship).
+Each bindTo component is passed a value (to render it to UI) as well as setter to a value that triggers a re-render (typically at the top location).
+
+The re-render is done in the component where you bind to the state via (bindToState, bindArrayToState).
+BindTo can be nested - composed to support components composition. Then path is concatenate according to parent-child relationship.
 
 
 # Get started
@@ -161,7 +160,7 @@ hobby form - data binding only
 +   no UI framework - [try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
 +   with react-bootstrap - [try in Plunker](http://embed.plnkr.co/7tumC62YO8GixKEMhJcw/preview)
 
-hobby form with validation  data binding only
+hobby form with validation using [business-rules-engine][bre]
 +   no UI framework - [try in Plunker](http://embed.plnkr.co/qXlUQ7a3YLEypwT2vvSb/preview)
 +   with react-bootstrap - [try in Plunker](http://embed.plnkr.co/6hoCCd7Bl1PHnb57rQbT/preview)
 +   with material-ui
@@ -183,3 +182,4 @@ For more information on react-binding please check out [my blog][blog].
 [materialUi]: https://github.com/callemall/material-ui
 [reactBootstrap]: http://react-bootstrap.github.io/
 [bre]: https://github.com/rsamec/business-rules-engine
+[react]: http://facebook.github.io/react/
