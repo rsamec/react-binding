@@ -1,6 +1,7 @@
 # react-binding
 
 React-binding is lightweight mixin for two-way data binding in [React][react].
+
 [BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
 +   object properties with path expression (dot notation)
@@ -26,6 +27,7 @@ Each bindTo return and uses interface called "value/onChange".
 Each bindTo component is passed a value (to render it to UI) as well as setter to a value that triggers a re-render (typically at the top location).
 
 The re-render is done in the component where you bind to the state via (bindToState, bindArrayToState).
+
 BindTo can be nested - composed to support components composition. Then path is concatenate according to parent-child relationship.
 
 
@@ -171,6 +173,7 @@ hobby form with validation using [business-rules-engine][bre]
 ## Contact
 
 For more information on react-binding please check out [my blog][blog].
+
 
 [git]: http://git-scm.com/
 [bower]: http://bower.io
