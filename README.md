@@ -1,10 +1,9 @@
 # react-binding
 
-React [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) is an easy way to express two-way data binding in React.
+React [LinkedStateMixin][valueLink] is an easy way to express two-way data binding in React.
 
-React-binding comes with [BindToMixin](https://github.com/rsamec/react-binding) as extension to [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html).
-
-Two-way binding support for:
+React-binding is lightweight react [BindToMixin](https://github.com/rsamec/react-binding).
+It offers two-way data binding support for:
 
 +   object properties with path expression
     +   this.bindToState("data","Employee.FirstName");
@@ -13,9 +12,15 @@ Two-way binding support for:
     +   this.bindTo(employee,"FirstName");
     +   this.bindTo(employee,"Contact.Email");
 +   collection-based structures - arrays and lists
-    +   this.props.model.items.map(function(item){})
-    +   this.props.model.add()
-    +   this.props.model.remove(item)
+    +   model={this.bindTo(employee,"FirstName")}
+        +   this.props.model.items.map(function(item){ return (<Hobby model={hobby}/>);})
+        +   this.props.model.add()
+        +   this.props.model.remove(item)
++   support for [ReactLink][valueLink]
+    +   valueLink={this.bindTo(employee,"FirstName")}
++   usable with any css frameworks
+    +   [react-bootstrap][reactBoostrap]
+    +   [material-ui][materialUi]
 
 # Get started
 
@@ -42,12 +47,12 @@ browserify ./index.js > bundle.js
 
 It enables to bind to object property with path expression
 
-+   using [valueLink](http://facebook.github.io/react/docs/two-way-binding-helpers.html)
++   using [ReactLink][valueLink]
 ``` js
 <input type='text' valueLink={this.bindToState("data","Employee.Contact.Email")} />
 ```
 
-+   without [valueLink](http://facebook.github.io/react/docs/two-way-binding-helpers.html)
++   without [ReactLink][valueLink]
 
 ``` js
 <TextBoxInput model={this.bindToState("data","Employee.Contact.Email")} />
@@ -73,7 +78,6 @@ It enables to bind to complex object with nested properties and reuse bindings i
 
 +   binding to state at root level
 ``` js
-
   <PersonComponent personModel={this.bindToState("data","Employee")} />
   <PersonComponent personModel={this.bindToState("data","Deputy")} />
 ```
@@ -144,7 +148,14 @@ It enables binding to collection-based structures (array). It enables to add and
 
 # Examples
 
-[hobby form - try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
+hobby form
+
++   without framework - [try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
++   with react-bootstrap - [try in Plunker](http://embed.plnkr.co/7tumC62YO8GixKEMhJcw/preview)
++   with material-ui
+    +   [demo](http://polymer-formvalidation.rhcloud.com/dist/index.html)
+    +   [sources](https://github.com/rsamec/react-hobby-form-app)
+
 
 ## Contact
 
@@ -156,3 +167,6 @@ For more information on react-binding please check out [my blog][blog].
 [node]: http://nodejs.org
 [browserify]: http://browserify.org/
 [blog]: http://rsamec.github.io/
+[valueLink]: http://facebook.github.io/react/docs/two-way-binding-helpers.html
+[materialUi]: https://github.com/callemall/material-ui
+[reactBootstrap]: http://react-bootstrap.github.io/
