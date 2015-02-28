@@ -169,7 +169,7 @@ Value converters
 
 Example - date converter -> using parameters 'dateFormat' is optional
 
-{% highlight js %}
+``` js
 var dateConverter = function() {
   this.parse = function (input, dateFormat) {
     if (!!!input) return undefined;
@@ -183,7 +183,16 @@ var dateConverter = function() {
     return moment(input).format(dateFormat);
   }
 }
-{% endhighlight %}
+```
+
+using converter
+
+``` js
+    <DatePicker label="From" model={this.bindToState("data", "Duration.From", converter, 'DD.MM.YYYY')} error={this.validationResult().Duration.From}  />
+    <DatePicker label="To" model={this.bindToState("data", "Duration.To", converter, 'DD.MM.YYYY')}  error={this.validationResult().Duration.To} />
+```
+
+[try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/preview)
 
 # Examples
 
@@ -202,7 +211,7 @@ hobby form with validation using [business-rules-engine][bre]
 
 value converters
 
-+   date picker - [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/)
++   date picker - [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/preview)
 
 ## Contact
 
