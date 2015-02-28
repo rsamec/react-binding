@@ -54,6 +54,32 @@ npm install reactify
 browserify ./index.js > bundle.js
 ```
 
+__minimal example__
+
+``` js
+var React = require('react');
+var BindToMixin = require('react-binding');
+
+var Form = React.createClass({
+  mixins: [BindToMixin],
+  getInitialState: function () {
+    return {data: {}}
+  },
+  render: function () {
+    return (
+      <div>
+        <input valueLink={this.bindToState("data", "FirstName")} />
+        <div>FirstName: {this.state.data.FirstName}</div>
+      </div>
+    )}
+});
+
+React.render(
+  <Form />,
+  document.getElementById('content')
+);
+
+```
 # Overview
 
 ### bindToState(key,pathExpression)
