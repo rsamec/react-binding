@@ -1,26 +1,53 @@
 # react-binding
 
-React [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) is an easy way to express two-way data binding in React.
+React-binding is lightweight mixin for two-way data binding in [React][react].
 
-React-binding comes with [BindToMixin](https://github.com/rsamec/react-binding) as extension to [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) two-way binding that supports binding to
+[BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
-+   object properties with path expression (Person.FirstName, Person.LastName, Person.Contact.Email)
++   object properties with path expression (dot notation)
+    +   this.bindToState("data","Employee.FirstName");
+    +   this.bindToState("data","Employee.Contact.Email");
 +   complex objects (json) with nested properties
+    +   this.bindTo(employee,"FirstName");
+    +   this.bindTo(employee,"Contact.Email");
 +   collection-based structures - arrays and lists
+    +   model={this.bindTo(employee,"FirstName")}
+        +   this.props.model.items.map(function(item){ return (<Hobby model={hobby}/>);})
+        +   this.props.model.add()
+        +   this.props.model.remove(item)
++   supports for "value/requestChange" interface also to enable to use [ReactLink][valueLink] attribute
+    +   valueLink={this.bindTo(employee,"FirstName")}
++   enables binding with value converters
+    +   supports both directions - format (toView) and parse (fromView)
+    +   support for converter parameter - valueLink={this.bindToState("data", "Duration.From",converter, "DD.MM.YYYY")}
+    +   converter parameter can be data-bound - valueLink={this.bindToState("data", "Duration.From",converter, this.state.format)}
++   usable with any css frameworks
+    +   [react-bootstrap][reactBootstrap]
+    +   [material-ui][materialUi]
+
+# Basic principle
+
+Each bindTo return and uses interface called "value/onChange".
+Each bindTo component is passed a value (to render it to UI) as well as setter to a value that triggers a re-render (typically at the top location).
+
+The re-render is done in the component where you bind to the state via (bindToState, bindArrayToState).
+
+BindTo can be nested - composed to support components composition. Then path is concatenate according to parent-child relationship.
+
 
 # Get started
 
-Node - CommonJS
+* [node package manager][npm]
 ``` js
 npm install react-binding
 ```
 
-Browser - Bower
+* [client-side code package manager][bower]
 ``` js
 bower install react-binding
 ```
 
-Bundling CommonJS with Browserify
+* [bundling with browserify][browserify]
 ``` js
 npm install -g browserify
 npm install reactify
@@ -33,12 +60,12 @@ browserify ./index.js > bundle.js
 
 It enables to bind to object property with path expression
 
-+   using [valueLink](http://facebook.github.io/react/docs/two-way-binding-helpers.html)
++   using [ReactLink][valueLink]
 ``` js
 <input type='text' valueLink={this.bindToState("data","Employee.Contact.Email")} />
 ```
 
-+   without [valueLink](http://facebook.github.io/react/docs/two-way-binding-helpers.html)
++   without [ReactLink][valueLink]
 
 ``` js
 <TextBoxInput model={this.bindToState("data","Employee.Contact.Email")} />
@@ -64,7 +91,6 @@ It enables to bind to complex object with nested properties and reuse bindings i
 
 +   binding to state at root level
 ``` js
-
   <PersonComponent personModel={this.bindToState("data","Employee")} />
   <PersonComponent personModel={this.bindToState("data","Deputy")} />
 ```
@@ -91,173 +117,106 @@ var PersonComponent = React.createClass({
 
 ```
 
-### bindToArrayState(key,path)
+### bindArrayToState(key,pathExpression)
 
 It enables binding to collection-based structures (array). It enables to add and remove items.
 
 +   binding to array
 
 ``` js
- <HobbyList model={this.bindArrayToState("data","Hobbies")} />
- ```
+    <HobbyList model={this.bindArrayToState("data","Hobbies")} />
+```
+
++   access items (this.props.model.items)
+
+``` js
+    var HobbyList = React.createClass({
+        render: function() {
+            if (this.props.model.items === undefined) return <span>There are no items.</span>;
+
+            var hobbies = this.props.model.items.map(function(hobby, index) {
+                return (
+                    <Hobby model={hobby} key={index} onDelete={this.handleDelete} />
+                );
+            },this);
+            return (
+                <div>{hobbies}</div>
+            );
+        }
+    });
+
+```
++   add new items (this.props.model.add(newItem?))
+``` js
+     handleAdd: function(){
+            return this.props.model.add();
+     },
+```
++   remove exiting items  (this.props.model.props.delete(item))
+``` js
+     handleDelete: function(hobby){
+            return this.props.model.remove(hobby);
+     },
+```
+
+### Value converters
+
+
+Value converters
+
++   format - translates data to a format suitable for the view
++   parse - convert data from the view to a format expected by your data (typically when using two-way binding with input elements to data).
+
+Example - date converter -> using parameters 'dateFormat' is optional
+
+{% highlight js %}
+var dateConverter = function() {
+  this.parse = function (input, dateFormat) {
+    if (!!!input) return undefined;
+    if (input.length < 8) return undefined;
+    var date = moment(input, dateFormat);
+    if (date.isValid()) return date.toDate();
+    return undefined;
+  }
+  this.format = function (input,dateFormat) {
+    if (!!!input) return undefined;
+    return moment(input).format(dateFormat);
+  }
+}
+{% endhighlight %}
 
 # Examples
 
-We create hobby form to capture data from user in this form
+hobby form - data binding only
 
-``` js
-{
-  "Person": {
-    "LastName": "Smith",
-    "FirstName": "Adam",
-    "Contact": {
-      "Email": "smith@gmail.com"
-    }
-  },
-  "Hobbies": [
-      {
-        "HobbyName": "Bandbington",
-        "Frequency": "Daily",
-        "Paid": true,
-        "Recommendation": true
-      },
-      {
-        "HobbyName": "Cycling",
-        "Frequency": "Daily",
-        "Recommendation": false,
-        "Paid": false
-      }
-    ]
-}
++   no UI framework - [try in Plunker](http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/preview)
++   with react-bootstrap - [try in Plunker](http://embed.plnkr.co/7tumC62YO8GixKEMhJcw/preview)
 
-```
+hobby form with validation using [business-rules-engine][bre]
+
++   no UI framework - [try in Plunker](http://embed.plnkr.co/qXlUQ7a3YLEypwT2vvSb/preview)
++   with react-bootstrap - [try in Plunker](http://embed.plnkr.co/6hoCCd7Bl1PHnb57rQbT/preview)
++   with material-ui
+    +   [demo](http://polymer-formvalidation.rhcloud.com/dist/index.html)
+    +   [sources](https://github.com/rsamec/react-hobby-form-app)
+
+value converters
+
++   date picker - [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/)
+
+## Contact
+
+For more information on react-binding please check out [my blog][blog].
 
 
-<iframe style="border: 1px solid #999;width: 100%; height: 200px"
-        src="http://embed.plnkr.co/aTilRFEJe0gEWaZzr8PC/?t=code?f=script.jsx" frameborder="0"
-        allowfullscreen="allowfullscreen">
-  Loading plunk...
-</iframe>
-
-
-### bindTo(parent,pathExpression)
-
-``` js
-var Form = React.createClass({
-    mixins:[BindToMixin],
-    getInitialState: function() {
-        return { data: {}};
-    },
-    render: function() {
-        return (
-            <div>
-               <input type='text' valueLink={this.bindToState("data","Employee.FirstName")} />
-               <input type='text' valueLink={this.bindToState("data","Employee.LastName")} />
-               <input type='text' valueLink={this.bindToState("data","Employee.Contact.Email")} />
-            </div>
-        );
-    }
-});
-```
-
-
-### bindTo(parent,pathExpression)
-
-We create reusable component PersonComponent with 3 fields and use twice in our form.
-
-``` js
-var Form = React.createClass({
-    mixins:[BindToMixin],
-    getInitialState: function() {
-        return { data: {}};
-    },
-    render: function() {
-        return (
-            <div>
-                <PersonComponent personModel={this.bindToState("data","Employee")} />
-                <PersonComponent personModel={this.bindToState("data","Deputy")} />
-            </div>
-        );
-    }
-});
-
-
-var PersonComponent = React.createClass({
-  mixins:[BindToMixin],
-  render: function() {
-    return (
-      <div>
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"FirstName")} />
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"LastName")} />
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"Contact.Email")} />
-      </div>
-    );
-  }
-});
-
-```
-
-### bindToArrayState(key,path)
-
-We create list of hobbies with add and remove buttons.
-
-``` js
-
-var HobbyForm = React.createClass({
-    mixins:[BindToMixin],
-    getInitialState: function() {
-        return { data: {}};
-    },
-    addHobby:function(e){
-      if (this.state.data.Hobbies === undefined)
-        this.state.data.Hobbies = []
-      this.state.data.Hobbies.push({});
-      this.setState({data:this.state.data})
-    },
-    render: function() {
-        return (
-            <div className="commentBox">
-                <div >
-                  <button onClick={this.addHobby}>Add</button>
-                  <HobbyList model={this.bindArrayToState("data","Hobbies")} />
-                </div>
-            </div>
-        );
-    }
-});
-var HobbyList = React.createClass({
-    handleDelete: function(hobby){
-        return this.props.model.remove(hobby);
-    },
-    render: function() {
-        if (this.props.model.Items === undefined) return <span>There are no items.</span>;
-
-        var nodes = this.props.model.items.map(function(hobby, index) {
-            return (
-                <Hobby model={hobby} key={index} onDelete={this.handleDelete} />
-            );
-        },this);
-        return (
-            <div>
-                {nodes}
-            </div>
-        );
-    }
-});
-var Hobby = React.createClass({
-    mixins:[BindToMixin],
-    handleClick: function(e){
-        e.preventDefault();
-        return this.props.onDelete(this.props.model.value);
-    },
-    render: function() {
-        return (
-            <div className="comment">
-              <input type='text' valueLink={this.bindTo(this.props.model,"HobbyName")} />
-              <button value="Delete" onClick={this.handleClick}>Delete</button>
-            </div>
-        );
-    }
-});
-
-```
+[git]: http://git-scm.com/
+[bower]: http://bower.io
+[npm]: https://www.npmjs.org/
+[node]: http://nodejs.org
+[browserify]: http://browserify.org/
+[blog]: http://rsamec.github.io/
+[valueLink]: http://facebook.github.io/react/docs/two-way-binding-helpers.html
+[materialUi]: https://github.com/callemall/material-ui
+[reactBootstrap]: http://react-bootstrap.github.io/
+[bre]: https://github.com/rsamec/business-rules-engine
+[react]: http://facebook.github.io/react/

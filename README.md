@@ -17,6 +17,10 @@ React-binding is lightweight mixin for two-way data binding in [React][react].
         +   this.props.model.remove(item)
 +   supports for "value/requestChange" interface also to enable to use [ReactLink][valueLink] attribute
     +   valueLink={this.bindTo(employee,"FirstName")}
++   enables binding with value converters
+    +   supports both directions - format (toView) and parse (fromView)
+    +   support for converter parameter - valueLink={this.bindToState("data", "Duration.From",converter, "DD.MM.YYYY")}
+    +   converter parameter can be data-bound - valueLink={this.bindToState("data", "Duration.From",converter, this.state.format)}
 +   usable with any css frameworks
     +   [react-bootstrap][reactBootstrap]
     +   [material-ui][materialUi]
@@ -113,7 +117,7 @@ var PersonComponent = React.createClass({
 
 ```
 
-### bindToArrayState(key,pathExpression)
+### bindArrayToState(key,pathExpression)
 
 It enables binding to collection-based structures (array). It enables to add and remove items.
 
@@ -155,6 +159,32 @@ It enables binding to collection-based structures (array). It enables to add and
      },
 ```
 
+### Value converters
+
+
+Value converters
+
++   format - translates data to a format suitable for the view
++   parse - convert data from the view to a format expected by your data (typically when using two-way binding with input elements to data).
+
+Example - date converter -> using parameters 'dateFormat' is optional
+
+{% highlight js %}
+var dateConverter = function() {
+  this.parse = function (input, dateFormat) {
+    if (!!!input) return undefined;
+    if (input.length < 8) return undefined;
+    var date = moment(input, dateFormat);
+    if (date.isValid()) return date.toDate();
+    return undefined;
+  }
+  this.format = function (input,dateFormat) {
+    if (!!!input) return undefined;
+    return moment(input).format(dateFormat);
+  }
+}
+{% endhighlight %}
+
 # Examples
 
 hobby form - data binding only
@@ -163,12 +193,16 @@ hobby form - data binding only
 +   with react-bootstrap - [try in Plunker](http://embed.plnkr.co/7tumC62YO8GixKEMhJcw/preview)
 
 hobby form with validation using [business-rules-engine][bre]
+
 +   no UI framework - [try in Plunker](http://embed.plnkr.co/qXlUQ7a3YLEypwT2vvSb/preview)
 +   with react-bootstrap - [try in Plunker](http://embed.plnkr.co/6hoCCd7Bl1PHnb57rQbT/preview)
 +   with material-ui
     +   [demo](http://polymer-formvalidation.rhcloud.com/dist/index.html)
     +   [sources](https://github.com/rsamec/react-hobby-form-app)
 
+value converters
+
++   date picker - [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/)
 
 ## Contact
 
