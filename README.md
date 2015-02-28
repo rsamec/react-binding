@@ -5,22 +5,22 @@ React-binding is lightweight mixin for two-way data binding in [React][react].
 [BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
 +   object properties with path expression (dot notation)
-    +   this.bindToState("data","Employee.FirstName");
-    +   this.bindToState("data","Employee.Contact.Email");
-+   complex objects (json) with nested properties
-    +   this.bindTo(employee,"FirstName");
-    +   this.bindTo(employee,"Contact.Email");
+    +   this.bindToState("data","__Employee.FirstName__");
+    +   this.bindToState("data","__Employee.Contact.Email__");
++   complex objects (json) with __nested properties__
+    +   this.bindTo(__employee__,"__FirstName__");
+    +   this.bindTo(__employee__,"__Contact.Email__");
 +   collection-based structures - arrays and lists
-    +   model={this.bindTo(employee,"FirstName")}
-        +   this.props.model.items.map(function(item){ return (<Hobby model={hobby}/>);})
-        +   this.props.model.add()
-        +   this.props.model.remove(item)
+    +   model={this.bindArrayToState("data","__Hobbies__")}
+        +   this.props.model.__items__.map(function(item){ return (<Hobby model={hobby}/>);})
+        +   this.props.model.__add()__
+        +   this.props.model.__remove(item)__
 +   supports for "value/requestChange" interface also to enable to use [ReactLink][valueLink] attribute
     +   valueLink={this.bindTo(employee,"FirstName")}
 +   enables binding with value converters
-    +   supports both directions - format (toView) and parse (fromView)
-    +   support for converter parameter - valueLink={this.bindToState("data", "Duration.From",converter, "DD.MM.YYYY")}
-    +   converter parameter can be data-bound - valueLink={this.bindToState("data", "Duration.From",converter, this.state.format)}
+    +   supports both directions - __format__ (toView) and __parse__ (fromView)
+    +   support for converter parameter - valueLink={this.bindToState("data", "Duration.From",__converter, "DD.MM.YYYY"__)}
+    +   converter parameter can be data-bound - valueLink={this.bindToState("data", "Duration.From",converter, __this.state.format__)}
 +   usable with any css frameworks
     +   [react-bootstrap][reactBootstrap]
     +   [material-ui][materialUi]
