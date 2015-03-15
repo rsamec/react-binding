@@ -147,6 +147,77 @@ var DataBinding;
     })();
     DataBinding.ArrayObjectBinding = ArrayObjectBinding;
     /**
+     It represents binding to array using relative path to parent object.
+     */
+    var ArrayParentBinding = (function () {
+        function ArrayParentBinding(parentBinding, relativePath) {
+            this.parentBinding = parentBinding;
+            this.relativePath = relativePath;
+        }
+        Object.defineProperty(ArrayParentBinding.prototype, "source", {
+            //wrapped properties - delegate call to parent
+            get: function () {
+                return this.parentBinding.source;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(ArrayParentBinding.prototype, "notifyChange", {
+            get: function () {
+                return this.parentBinding.notifyChange;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(ArrayParentBinding.prototype, "path", {
+            //concatenate path
+            get: function () {
+                if (this.parentBinding.path === undefined)
+                    return this.relativePath;
+                return [this.parentBinding.path, this.relativePath].join(".");
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(ArrayParentBinding.prototype, "items", {
+            get: function () {
+                if (this.source === undefined)
+                    return [];
+                var items = this.source.getValue(this.path);
+                if (items === undefined)
+                    return [];
+                return items.map(function (item, index) {
+                    return new PathObjectBinding(item, undefined, this.notifyChange);
+                }, this);
+            },
+            enumerable: true,
+            configurable: true
+        });
+        ArrayParentBinding.prototype.add = function (defaultItem) {
+            var items = this.source.getValue(this.path);
+            if (items === undefined)
+                return;
+            if (defaultItem === undefined)
+                defaultItem = {};
+            items.push(defaultItem);
+            if (this.notifyChange !== undefined)
+                this.notifyChange();
+        };
+        ArrayParentBinding.prototype.remove = function (itemToRemove) {
+            var items = this.source.getValue(this.path);
+            if (items === undefined)
+                return;
+            var index = items.indexOf(itemToRemove);
+            if (index === -1)
+                return;
+            items.splice(index, 1);
+            if (this.notifyChange !== undefined)
+                this.notifyChange();
+        };
+        return ArrayParentBinding;
+    })();
+    DataBinding.ArrayParentBinding = ArrayParentBinding;
+    /**
      It represents binding to relative path for parent object.
      */
     var PathParentBinding = (function () {
@@ -344,6 +415,22 @@ var DataBinding;
          */
         BindToMixin.prototype.bindArrayToState = function (key, path) {
             return new ArrayObjectBinding(this["state"][key], path, this.createStateKeySetter(this, key));
+        };
+        /**
+         * It enables binding to collection-based structures (array) for nested arrays. It enables to add and remove items.
+         *
+         * +   binding to parent
+         *
+         * ``` js
+         *   <input type='text' valueLink={this.bindArrayTo(this.props.personModel,"Contact.Email")} />
+         * ```
+         *
+         * @param parent - the parent object
+         * @param path - expression to bind to property - relative path from parent
+         * @returns {DataBinding.PathParentBinding}
+         */
+        BindToMixin.prototype.bindArrayTo = function (parent, path) {
+            return new ArrayParentBinding(parent, path);
         };
         return BindToMixin;
     })();

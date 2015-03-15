@@ -116,6 +116,68 @@ describe('DataBinding', function () {
         execAndVerifyPersonProperties(firstPerson);
     });
 
+    it('binding nested arrays', function () {
+        //when
+        var data = {
+            Data: {
+                "Hobbies": [
+                    {
+                        "People":[
+                            {
+                                "FirstName": "Kent1",
+                                "LastName": "Clark1",
+                                "Contact": {
+                                    "Email": "email1"
+                                }
+                            },
+                            {
+                                "FirstName": "Kent2",
+                                "LastName": "Clark2",
+                                "Contact": {
+                                    "Email": "email2"
+                                }
+                            }
+
+                        ]
+                    }
+                ]
+            }
+        };
+
+        //exec
+        var root = new BindTo.ArrayObjectBinding(data,"Data.Hobbies").items[0];
+        var people = new BindTo.ArrayParentBinding(root,"People");
+
+        var firstPerson = people.items[0];
+        var secondPerson = people.items[1];
+
+        var execAndVerifyProperties = function(person, suffix){
+
+            //exec
+            var firstName = new BindTo.PathParentBinding(person,"FirstName");
+            var lastName = new BindTo.PathParentBinding(person,"LastName");
+            var email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+            expect1(firstName.value).to.equal("Kent" + suffix);
+            expect1(lastName.value).to.equal("Clark" + suffix);
+            expect1(email.value).to.equal("email" + suffix);
+
+            //exec value
+            firstName.value  = "Roman changed";
+            lastName.value  = "Samec changed";
+            email.value  = "email changed";
+
+            expect1(firstName.value).to.equal("Roman changed");
+            expect1(lastName.value).to.equal("Samec changed");
+            expect1(email.value).to.equal("email changed");
+        }
+
+        //verify
+        execAndVerifyProperties(firstPerson,1);
+        execAndVerifyProperties(secondPerson,2);
+    });
+
     it('bind dates with value convertors', function () {
 
         var fromDefault = new Date(2015, 0, 1);

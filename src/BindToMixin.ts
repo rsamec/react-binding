@@ -153,6 +153,55 @@ module DataBinding{
     }
 
     /**
+     It represents binding to array using relative path to parent object.
+     */
+    export class ArrayParentBinding{
+
+        constructor(private parentBinding:IPathObjectBinding,public relativePath){
+
+        }
+
+        //wrapped properties - delegate call to parent
+        public get source():IPathObjectBinder {return this.parentBinding.source;}
+        public get notifyChange(){return this.parentBinding.notifyChange;}
+
+        //concatenate path
+        public get path():string {
+            if (this.parentBinding.path === undefined) return this.relativePath;
+            return [this.parentBinding.path,this.relativePath].join(".");
+        }
+
+        public get items():Array<IPathObjectBinding> {
+            if (this.source === undefined) return [];
+            var items = this.source.getValue(this.path);
+
+            if (items === undefined) return [];
+            return items.map(function(item, index) {
+                return new PathObjectBinding(item,undefined, this.notifyChange);
+            },this);
+        }
+
+        public add(defaultItem?){
+            var items = this.source.getValue(this.path);
+            if (items === undefined) return;
+
+            if (defaultItem === undefined) defaultItem = {}
+            items.push(defaultItem);
+            if (this.notifyChange !== undefined) this.notifyChange();
+        }
+
+        public remove(itemToRemove){
+            var items = this.source.getValue(this.path);
+            if (items === undefined) return;
+            var index = items.indexOf(itemToRemove);
+            if (index === -1) return;
+            items.splice(index,1);
+
+            if (this.notifyChange !== undefined) this.notifyChange();
+        }
+    }
+
+    /**
      It represents binding to relative path for parent object.
      */
     export class PathParentBinding implements IPathObjectBinding{
@@ -334,6 +383,24 @@ module DataBinding{
                 this.createStateKeySetter(this, key)
                 //ReactStateSetters.createStateKeySetter(this, key)
             );
+        }
+
+
+        /**
+         * It enables binding to collection-based structures (array) for nested arrays. It enables to add and remove items.
+         *
+         * +   binding to parent
+         *
+         * ``` js
+         *   <input type='text' valueLink={this.bindArrayTo(this.props.personModel,"Contact.Email")} />
+         * ```
+         *
+         * @param parent - the parent object
+         * @param path - expression to bind to property - relative path from parent
+         * @returns {DataBinding.PathParentBinding}
+         */
+        public bindArrayTo(parent, path): ArrayParentBinding {
+            return new ArrayParentBinding(parent, path);
         }
     }
 

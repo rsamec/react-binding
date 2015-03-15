@@ -185,6 +185,47 @@ It enables binding to collection-based structures (array). It enables to add and
      },
 ```
 
+### bindArrayTo(parent,pathExpression)
+
+It enables binding to collection-based structures (array) for nested arrays. It enables to add and remove items.
+
++   binding to array
+
+``` js
+    <HobbyList model={this.bindArrayTo(parent,"Hobbies")} />
+```
+
++   access items (this.props.model.items)
+
+``` js
+    var HobbyList = React.createClass({
+        render: function() {
+            if (this.props.model.items === undefined) return <span>There are no items.</span>;
+
+            var hobbies = this.props.model.items.map(function(hobby, index) {
+                return (
+                    <Hobby model={hobby} key={index} onDelete={this.handleDelete} />
+                );
+            },this);
+            return (
+                <div>{hobbies}</div>
+            );
+        }
+    });
+
+```
++   add new items (this.props.model.add(newItem?))
+``` js
+     handleAdd: function(){
+            return this.props.model.add();
+     },
+```
++   remove exiting items  (this.props.model.props.delete(item))
+``` js
+     handleDelete: function(hobby){
+            return this.props.model.remove(hobby);
+     },
+```
 ### Value converters
 
 
