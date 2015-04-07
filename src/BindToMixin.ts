@@ -70,11 +70,10 @@ module DataBinding{
         private string_to_ref(obj, string) {
             var parts = string.split('.');
             var newObj = obj[parts[0]];
+            if (newObj === undefined) newObj = obj[parts[0]] = {};
             if (!parts[1]){
-                if (newObj === undefined) newObj = obj[parts[0]] = {};
                 return newObj
             }
-            if (newObj == undefined) return undefined;
             parts.splice(0, 1);
             var newString = parts.join('.');
             return this.string_to_ref(newObj, newString);

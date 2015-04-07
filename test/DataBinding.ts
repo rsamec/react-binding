@@ -59,6 +59,7 @@ describe('DataBinding', function () {
         expect1(lastName.value).to.equal("Samec");
         expect1(email.value).to.equal("email");
 
+
         //exec value
         firstName.value  = "Roman changed";
         lastName.value  = "Samec changed";
@@ -82,11 +83,33 @@ describe('DataBinding', function () {
                 }
             }
         };
+
+
         //exec
         var root = new BindTo.PathObjectBinding(data.Data);
 
         //verify
         execAndVerifyPersonProperties(root);
+
+    });
+
+    it('bind properties by root object - long pathes without initialized empty object', function () {
+        //when
+        var data = {
+            Data: {}
+        };
+
+        //exec
+        var root = new BindTo.PathObjectBinding(data.Data);
+        var email = new BindTo.PathParentBinding(root,"Person.Contact.Email");
+
+        //verify
+        expect1(email.path).to.equal("Person.Contact.Email");
+
+        email.value  = "email changed";
+
+        expect1(email.value).to.equal("email changed");
+
 
     });
 
@@ -100,7 +123,11 @@ describe('DataBinding', function () {
                             "FirstName": "Roman",
                             "LastName": "Samec",
                             "Contact": {
-                                "Email": "email"
+                                "Email": "email",
+                                "Phone":{
+                                    CountryCode:"420",
+                                    Number:"999888777"
+                                }
                             }
                         }
                     }
@@ -265,7 +292,5 @@ describe('DataBinding', function () {
         //verify
         expect1(data.Data.Vacation.From.toISOString().slice(0,10)).to.equal(fromChanged.toISOString().slice(0,10));
         expect1(data.Data.Vacation.To.toISOString().slice(0,10)).to.equal(toChanged.toISOString().slice(0,10));
-
-
     });
 });
