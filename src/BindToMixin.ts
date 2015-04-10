@@ -18,12 +18,12 @@ module DataBinding{
     /**
      It represents change notification function. It is called whenever there is a change.
      */
-    export interface INotifyChange {(any?):void};
+    export interface INotifyChange {(any?):void}
 
     /**
      It represents change notifikcation function with changed value. It supports valueLink interface
      */
-    export interface IRequestChange {(any):void};
+    export interface IRequestChange {(any):void}
 
     /**
      It represents binding to property at source object at a given path.
@@ -49,26 +49,45 @@ module DataBinding{
         public getValue(path:string) {
             var parent = this.getParent(path);
             if (parent === undefined) return;
-            var property = this.getProperty(path);
+            var property = PathObjectBinder.getProperty(path);
             return parent[property];
         }
 
         public setValue(path:string, value:string) {
             var parent = this.getParent(path);
             if (parent === undefined) return;
-            var property = this.getProperty(path);
+            var property = PathObjectBinder.getProperty(path);
             parent[property] = value;
         }
         private getParent(path:string) {
             var last = path.lastIndexOf(".");
             return last != -1 ? this.string_to_ref(this.source, path.substring(0, last)) : this.source;
         }
-        private getProperty(path):string {
-            var last = path.lastIndexOf(".")
+        static getProperty(path):string {
+            var last = path.lastIndexOf(".");
             return last != -1 ? path.substring(last + 1, path.length) : path;
         }
+
         private string_to_ref(obj, string) {
             var parts = string.split('.');
+
+            //experimental - support for square brackets
+            //var arrayExp = /\[(\d*)\]/;
+            //var firstExp = parts[0];
+            //var matches = arrayExp.exec(firstExp);
+            //var newObj;
+            //if (!!matches){
+            //    firstExp =  firstExp.replace(matches[0],"");
+            //    var newArray = obj[firstExp][matche];
+            //    if (newArray === undefined) newArray = [];
+            //    newObj = newArray[matches[1]];
+            //}
+            //else{
+            //    newObj = obj[firstExp];
+            //    if (newObj === undefined) newObj = obj[firstExp] = {};
+            //}
+            //var newObj = !!matches? obj[firstExp.replace(matches[0],"")][matches[1]]:obj[firstExp];
+
             var newObj = obj[parts[0]];
             if (newObj === undefined) newObj = obj[parts[0]] = {};
             if (!parts[1]){
@@ -100,7 +119,7 @@ module DataBinding{
 
 
             var previousValue = this.path === undefined ? this.sourceObject: this.source.getValue(this.path);
-            var convertedValueToBeSet =  this.valueConverter !== undefined?this.valueConverter.parse(value):value
+            var convertedValueToBeSet =  this.valueConverter !== undefined?this.valueConverter.parse(value):value;
 
             //check if the value is really changed - strict equality
             if (previousValue === convertedValueToBeSet) return;
@@ -126,7 +145,7 @@ module DataBinding{
             var items = this.path === undefined ? this.sourceObject: this.source.getValue(this.path);
 
             if (items === undefined) return [];
-            return items.map(function(item, index) {
+            return items.map(function(item) {
                 return new PathObjectBinding(item,undefined, this.notifyChange);
             },this);
         }
@@ -135,7 +154,7 @@ module DataBinding{
             var items = this.path === undefined ? this.sourceObject: this.source.getValue(this.path);
             if (items === undefined) return;
 
-            if (defaultItem === undefined) defaultItem = {}
+            if (defaultItem === undefined) defaultItem = {};
             items.push(defaultItem);
             if (this.notifyChange !== undefined) this.notifyChange();
         }
@@ -175,7 +194,7 @@ module DataBinding{
             var items = this.source.getValue(this.path);
 
             if (items === undefined) return [];
-            return items.map(function(item, index) {
+            return items.map(function(item) {
                 return new PathObjectBinding(item,undefined, this.notifyChange);
             },this);
         }
@@ -184,7 +203,7 @@ module DataBinding{
             var items = this.source.getValue(this.path);
             if (items === undefined) return;
 
-            if (defaultItem === undefined) defaultItem = {}
+            if (defaultItem === undefined) defaultItem = {};
             items.push(defaultItem);
             if (this.notifyChange !== undefined) this.notifyChange();
         }
@@ -230,7 +249,7 @@ module DataBinding{
 
             //check if the value is really changed - strict equality
             var previousValue = this.source.getValue(this.path);
-            var convertedValueToBeSet =  this.valueConverter !== undefined?this.valueConverter.parse(value):value
+            var convertedValueToBeSet =  this.valueConverter !== undefined?this.valueConverter.parse(value):value;
 
             if (previousValue === convertedValueToBeSet) return;
 
@@ -451,17 +470,17 @@ module DataBinding{
 
     }
 
-    class Util{
-        static partial(fn, args) {
-            return function () {
-                var arg = 0;
-                for (var i = 0; i < args.length && arg < arguments.length; i++)
-                    if (args[i] === undefined)
-                        args[i] = arguments[arg++];
-                return fn.apply(this, args);
-            };
-        }
-    }
+    //class Util{
+    //    static partial(fn, args) {
+    //        return function () {
+    //            var arg = 0;
+    //            for (var i = 0; i < args.length && arg < arguments.length; i++)
+    //                if (args[i] === undefined)
+    //                    args[i] = arguments[arg++];
+    //            return fn.apply(this, args);
+    //        };
+    //    }
+    //}
 
 }
 

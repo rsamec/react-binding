@@ -3,8 +3,6 @@
  */
 var DataBinding;
 (function (DataBinding) {
-    ;
-    ;
     /**
      It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
      */
@@ -16,26 +14,42 @@ var DataBinding;
             var parent = this.getParent(path);
             if (parent === undefined)
                 return;
-            var property = this.getProperty(path);
+            var property = PathObjectBinder.getProperty(path);
             return parent[property];
         };
         PathObjectBinder.prototype.setValue = function (path, value) {
             var parent = this.getParent(path);
             if (parent === undefined)
                 return;
-            var property = this.getProperty(path);
+            var property = PathObjectBinder.getProperty(path);
             parent[property] = value;
         };
         PathObjectBinder.prototype.getParent = function (path) {
             var last = path.lastIndexOf(".");
             return last != -1 ? this.string_to_ref(this.source, path.substring(0, last)) : this.source;
         };
-        PathObjectBinder.prototype.getProperty = function (path) {
+        PathObjectBinder.getProperty = function (path) {
             var last = path.lastIndexOf(".");
             return last != -1 ? path.substring(last + 1, path.length) : path;
         };
         PathObjectBinder.prototype.string_to_ref = function (obj, string) {
             var parts = string.split('.');
+            //experimental - support for square brackets
+            //var arrayExp = /\[(\d*)\]/;
+            //var firstExp = parts[0];
+            //var matches = arrayExp.exec(firstExp);
+            //var newObj;
+            //if (!!matches){
+            //    firstExp =  firstExp.replace(matches[0],"");
+            //    var newArray = obj[firstExp][matche];
+            //    if (newArray === undefined) newArray = [];
+            //    newObj = newArray[matches[1]];
+            //}
+            //else{
+            //    newObj = obj[firstExp];
+            //    if (newObj === undefined) newObj = obj[firstExp] = {};
+            //}
+            //var newObj = !!matches? obj[firstExp.replace(matches[0],"")][matches[1]]:obj[firstExp];
             var newObj = obj[parts[0]];
             if (newObj === undefined)
                 newObj = obj[parts[0]] = {};
@@ -113,7 +127,7 @@ var DataBinding;
                 var items = this.path === undefined ? this.sourceObject : this.source.getValue(this.path);
                 if (items === undefined)
                     return [];
-                return items.map(function (item, index) {
+                return items.map(function (item) {
                     return new PathObjectBinding(item, undefined, this.notifyChange);
                 }, this);
             },
@@ -184,7 +198,7 @@ var DataBinding;
                 var items = this.source.getValue(this.path);
                 if (items === undefined)
                     return [];
-                return items.map(function (item, index) {
+                return items.map(function (item) {
                     return new PathObjectBinding(item, undefined, this.notifyChange);
                 }, this);
             },
@@ -452,20 +466,6 @@ var DataBinding;
         return CurryConverter;
     })();
     DataBinding.CurryConverter = CurryConverter;
-    var Util = (function () {
-        function Util() {
-        }
-        Util.partial = function (fn, args) {
-            return function () {
-                var arg = 0;
-                for (var i = 0; i < args.length && arg < arguments.length; i++)
-                    if (args[i] === undefined)
-                        args[i] = arguments[arg++];
-                return fn.apply(this, args);
-            };
-        };
-        return Util;
-    })();
 })(DataBinding || (DataBinding = {}));
 function extractPrototype(clazz) {
     var proto = {};

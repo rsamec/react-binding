@@ -1,6 +1,6 @@
 {
   "name": "react-binding",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "BindToMixin - react two-way data binding for complex objects and arrays.",
   "main": "BindToMixin.js",
   "directories": {

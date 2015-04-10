@@ -8,12 +8,12 @@ var expect1 = require('expect.js');
 
 class DateValueConverter
 {
-    public format(value){
+    format(value){
         if (value === undefined) return value;
         return value.toISOString().slice(0, 10);
     }
 
-    public parse(value){
+    parse(value){
         if (value === undefined) return value;
         var regPattern = "\\d{4}\\/\\d{2}\\/\\d{2}";
         var dateString = value.match(regPattern);
@@ -23,77 +23,107 @@ class DateValueConverter
 
 class DateValueSuffixConverter
 {
-    public format(value,parameters){
+    format(value,parameters){
         if (value === undefined) return value;
         if (parameters === undefined) parameters ="";
         return value.toISOString().slice(0, 10) + parameters;
     }
 
-    public parse(value, parameters){
+    parse(value){
         if (value === undefined) return value;
-        if (parameters === undefined) parameters ="";
-
-        var regPattern = "\\d{4}\\/\\d{2}\\/\\d{2}";// + parameters;
+        var regPattern = "\\d{4}\\/\\d{2}\\/\\d{2}";
         var dateString = value.match(regPattern);
         return new Date(dateString);
     }
-}
-
+};
+var mapObject = function(obj, callback) {
+    var result = {};
+    Object.keys(obj).forEach(function (key) {
+        result[key] = callback.call(obj, obj[key], key, obj);
+    });
+    return result;
+};
 describe('DataBinding', function () {
 
-    var execAndVerifyPersonProperties = function(root){
-        //exec
-        var person = new BindTo.PathParentBinding(root,"Person");
-        var firstName = new BindTo.PathParentBinding(person,"FirstName");
-        var lastName = new BindTo.PathParentBinding(person,"LastName");
-        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+    var initValues = {firstName:"Roman",lastName:"Samec",email:"email"};
+    var changedValues = { firstName: "Roman changed",lastName: "Samec changed",email:"email changed"};
 
-        //verify
-        expect1(person.path).to.equal("Person");
+    var execAndVerifyPersonProperties = function(bindings, initValues, changedValues){
+
+        var root = bindings["root"];
+        var firstName = bindings["firstName"];
+        var lastName = bindings["lastName"];
+        var email = bindings["email"];
+
+        var sourceObj = root.value;
+
+        //verify pathes
         expect1(firstName.path).to.equal("Person.FirstName");
         expect1(lastName.path).to.equal("Person.LastName");
         expect1(email.path).to.equal("Person.Contact.Email");
 
+        //verify value getter
+        expect1(firstName.value).to.equal(initValues.firstName);
+        expect1(lastName.value).to.equal(initValues.lastName);
+        expect1(email.value).to.equal(initValues.email);
 
-        expect1(firstName.value).to.equal("Roman");
-        expect1(lastName.value).to.equal("Samec");
-        expect1(email.value).to.equal("email");
+        //verify initial values at the source object
+        expect1(sourceObj.Person.FirstName).to.equal(initValues.firstName);
+        expect1(sourceObj.Person.LastName).to.equal(initValues.lastName);
+        expect1(sourceObj.Person.Contact.Email).to.equal(initValues.email);
 
+        //exec -> setter -> change values
+        firstName.value  =  changedValues.firstName;
+        lastName.value  = changedValues.lastName;
+        email.value  = changedValues.email;
 
-        //exec value
-        firstName.value  = "Roman changed";
-        lastName.value  = "Samec changed";
-        email.value  = "email changed";
+        //verify value getter
+        expect1(firstName.value).to.equal(changedValues.firstName);
+        expect1(lastName.value).to.equal(changedValues.lastName);
+        expect1(email.value).to.equal(changedValues.email);
 
-        expect1(firstName.value).to.equal("Roman changed");
-        expect1(lastName.value).to.equal("Samec changed");
-        expect1(email.value).to.equal("email changed");
-    }
+        //verify changed values at the source object
+        expect1(sourceObj.Person.FirstName).to.equal(changedValues.firstName);
+        expect1(sourceObj.Person.LastName).to.equal(changedValues.lastName);
+        expect1(sourceObj.Person.Contact.Email).to.equal(changedValues.email);
+    };
 
-    it('bind properties by root object', function () {
+    it('bind to properties by path', function () {
         //when
         var data = {
             Data: {
                 "Person": {
-                    "FirstName": "Roman",
-                    "LastName": "Samec",
+                    "FirstName": initValues.firstName,
+                    "LastName": initValues.lastName,
                     "Contact": {
-                        "Email": "email"
+                        "Email": initValues.email
                     }
                 }
             }
         };
 
-
         //exec
         var root = new BindTo.PathObjectBinding(data.Data);
+        var person = new BindTo.PathParentBinding(root,"Person");
+        var firstName = new BindTo.PathParentBinding(person,"FirstName");
+        var lastName = new BindTo.PathParentBinding(person,"LastName");
+        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        var nestedBindings = {
+            root:root,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
 
         //verify
-        execAndVerifyPersonProperties(root);
+        expect1(person.path).to.equal("Person");
+        execAndVerifyPersonProperties(nestedBindings,initValues,changedValues);
 
     });
 
-    it('bind properties by root object - long pathes without initialized empty object', function () {
+    it('bind to properties by path - empty object', function () {
         //when
         var data = {
             Data: {}
@@ -101,49 +131,122 @@ describe('DataBinding', function () {
 
         //exec
         var root = new BindTo.PathObjectBinding(data.Data);
+        var firstName = new BindTo.PathParentBinding(root,"Person.FirstName");
+        var lastName = new BindTo.PathParentBinding(root,"Person.LastName");
         var email = new BindTo.PathParentBinding(root,"Person.Contact.Email");
 
+
+        var flatBindings = {
+            root:root,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
         //verify
-        expect1(email.path).to.equal("Person.Contact.Email");
-
-        email.value  = "email changed";
-
-        expect1(email.value).to.equal("email changed");
+        execAndVerifyPersonProperties(flatBindings,{},changedValues);
 
 
     });
+
+    //it('bind arrays - simple - square brackets', function () {
+    //    //when
+    //    var data = {
+    //        Data: {
+    //            Hobbies:[
+    //                {HobbyName:"bandbington"},
+    //                {HobbyName:"tennis"}
+    //            ]
+    //        }
+    //    };
+    //
+    //    //exec
+    //    //var root = new BindTo.PathObjectBinding(data.Data);
+    //    //var email = new BindTo.PathParentBinding(root,"Hobbies[0].HobbyName");
+    //
+    //    var row = new BindTo.PathObjectBinding(data,"Data.Hobbies[0]");
+    //    var email = new BindTo.PathParentBinding(row,"HobbyName");
+    //
+    //    //verify
+    //    expect1(email.path).to.equal("Data.Hobbies[0].HobbyName");
+    //
+    //    email.value  = "value changed";
+    //
+    //    expect1(email.value).to.equal("value changed");
+    //
+    //    expect1(data.Data.Hobbies[0].HobbyName).to.equal("value changed");
+    //
+    //});
+
 
     it('binding arrays', function () {
         //when
         var data = {
             Data: {
-                "Hobbies": [
+                "People": [
                     {
                         "Person": {
-                            "FirstName": "Roman",
-                            "LastName": "Samec",
+                            "FirstName": initValues.firstName,
+                            "LastName": initValues.lastName,
                             "Contact": {
-                                "Email": "email",
-                                "Phone":{
-                                    CountryCode:"420",
-                                    Number:"999888777"
-                                }
+                                "Email": initValues.email
                             }
                         }
+                    },
+                    {
                     }
                 ]
             }
         };
 
         //exec
-        var root = new BindTo.ArrayObjectBinding(data,"Data.Hobbies");
-        var firstPerson = root.items[0];
+        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+
+        //first row
+        var row = root.items[0];
+        var person = new BindTo.PathParentBinding(row,"Person");
+        var firstName = new BindTo.PathParentBinding(person,"FirstName");
+        var lastName = new BindTo.PathParentBinding(person,"LastName");
+        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        var nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
 
         //verify
-        execAndVerifyPersonProperties(firstPerson);
+        execAndVerifyPersonProperties(nestedBindings,initValues,changedValues);
+
+
+        //second row
+        row = root.items[1];
+        person = new BindTo.PathParentBinding(row,"Person");
+        firstName = new BindTo.PathParentBinding(person,"FirstName");
+        lastName = new BindTo.PathParentBinding(person,"LastName");
+        email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,{},changedValues);
     });
 
     it('binding nested arrays', function () {
+
+       var initValues1:any = mapObject(initValues,function(item){return item + "1"});
+       var initValues2:any = mapObject(initValues,function(item){return item + "2"});
+       var changedValues1:any = mapObject(changedValues,function(item){return item + "1"});
+       var changedValues2:any = mapObject(changedValues,function(item){return item + "2"});
+
         //when
         var data = {
             Data: {
@@ -151,19 +254,23 @@ describe('DataBinding', function () {
                     {
                         "People":[
                             {
-                                "FirstName": "Kent1",
-                                "LastName": "Clark1",
-                                "Contact": {
-                                    "Email": "email1"
+                                "Person":{
+                                    "FirstName": initValues1.firstName,
+                                    "LastName": initValues1.lastName,
+                                    "Contact": {
+                                        "Email": initValues1.email
+                                    }
                                 }
                             },
                             {
-                                "FirstName": "Kent2",
-                                "LastName": "Clark2",
-                                "Contact": {
-                                    "Email": "email2"
+                                "Person": {
+                                    "FirstName": initValues2.firstName,
+                                    "LastName": initValues2.lastName,
+                                    "Contact": {
+                                        "Email": initValues2.email
+                                    }
                                 }
-                            }
+                            },
 
                         ]
                     }
@@ -175,34 +282,43 @@ describe('DataBinding', function () {
         var root = new BindTo.ArrayObjectBinding(data,"Data.Hobbies").items[0];
         var people = new BindTo.ArrayParentBinding(root,"People");
 
-        var firstPerson = people.items[0];
-        var secondPerson = people.items[1];
-
-        var execAndVerifyProperties = function(person, suffix){
-
-            //exec
-            var firstName = new BindTo.PathParentBinding(person,"FirstName");
-            var lastName = new BindTo.PathParentBinding(person,"LastName");
-            var email = new BindTo.PathParentBinding(person,"Contact.Email");
+        //first person
+        var row = people.items[0];
+        var person = new BindTo.PathParentBinding(row,"Person");
+        var firstName = new BindTo.PathParentBinding(person,"FirstName");
+        var lastName = new BindTo.PathParentBinding(person,"LastName");
+        var email = new BindTo.PathParentBinding(person,"Contact.Email");
 
 
-            expect1(firstName.value).to.equal("Kent" + suffix);
-            expect1(lastName.value).to.equal("Clark" + suffix);
-            expect1(email.value).to.equal("email" + suffix);
-
-            //exec value
-            firstName.value  = "Roman changed";
-            lastName.value  = "Samec changed";
-            email.value  = "email changed";
-
-            expect1(firstName.value).to.equal("Roman changed");
-            expect1(lastName.value).to.equal("Samec changed");
-            expect1(email.value).to.equal("email changed");
-        }
+        var nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
 
         //verify
-        execAndVerifyProperties(firstPerson,1);
-        execAndVerifyProperties(secondPerson,2);
+        execAndVerifyPersonProperties(nestedBindings,initValues1,changedValues1);
+
+
+        //second person
+        row = people.items[1];
+        person = new BindTo.PathParentBinding(row,"Person");
+        firstName = new BindTo.PathParentBinding(person,"FirstName");
+        lastName = new BindTo.PathParentBinding(person,"LastName");
+        email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,initValues2,changedValues2);
+
     });
 
     it('bind dates with value convertors', function () {
@@ -253,7 +369,7 @@ describe('DataBinding', function () {
         var fromDefault = new Date(2015, 0, 1);
         var toDefault = new Date(2015, 0, 7);
 
-        var formatSuffix = "UTC"
+        var formatSuffix = "UTC";
 
         //when
         var data = {
