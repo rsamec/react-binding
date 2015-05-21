@@ -68,8 +68,8 @@ module DataBinding{
             return last != -1 ? path.substring(last + 1, path.length) : path;
         }
 
-        private string_to_ref(obj, string) {
-            var parts = string.split('.');
+        private string_to_ref(obj, s) {
+            var parts = s.split('.');
 
             //experimental - support for square brackets
             //var arrayExp = /\[(\d*)\]/;
@@ -152,8 +152,10 @@ module DataBinding{
 
         public add(defaultItem?){
             var items = this.path === undefined ? this.sourceObject: this.source.getValue(this.path);
-            if (items === undefined) return;
-
+            if (items === undefined) {
+                this.source.setValue(this.path, []);
+                items = this.source.getValue(this.path);
+            }
             if (defaultItem === undefined) defaultItem = {};
             items.push(defaultItem);
             if (this.notifyChange !== undefined) this.notifyChange();

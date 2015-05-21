@@ -240,6 +240,54 @@ describe('DataBinding', function () {
         execAndVerifyPersonProperties(nestedBindings,{},changedValues);
     });
 
+    it('binding arrays - empty object', function () {
+        //when
+        var data = {
+            Data: {}
+        };
+
+        //exec
+        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+
+        root.add();
+
+        //first row
+        var row = root.items[0];
+        var person = new BindTo.PathParentBinding(row,"Person");
+        var firstName = new BindTo.PathParentBinding(person,"FirstName");
+        var lastName = new BindTo.PathParentBinding(person,"LastName");
+        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        var nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,{},changedValues);
+
+        root.add();
+        //second row
+        row = root.items[1];
+        person = new BindTo.PathParentBinding(row,"Person");
+        firstName = new BindTo.PathParentBinding(person,"FirstName");
+        lastName = new BindTo.PathParentBinding(person,"LastName");
+        email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,{},changedValues);
+    });
     it('binding nested arrays', function () {
 
        var initValues1:any = mapObject(initValues,function(item){return item + "1"});

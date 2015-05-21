@@ -32,8 +32,8 @@ var DataBinding;
             var last = path.lastIndexOf(".");
             return last != -1 ? path.substring(last + 1, path.length) : path;
         };
-        PathObjectBinder.prototype.string_to_ref = function (obj, string) {
-            var parts = string.split('.');
+        PathObjectBinder.prototype.string_to_ref = function (obj, s) {
+            var parts = s.split('.');
             //experimental - support for square brackets
             //var arrayExp = /\[(\d*)\]/;
             //var firstExp = parts[0];
@@ -136,8 +136,10 @@ var DataBinding;
         });
         ArrayObjectBinding.prototype.add = function (defaultItem) {
             var items = this.path === undefined ? this.sourceObject : this.source.getValue(this.path);
-            if (items === undefined)
-                return;
+            if (items === undefined) {
+                this.source.setValue(this.path, []);
+                items = this.source.getValue(this.path);
+            }
             if (defaultItem === undefined)
                 defaultItem = {};
             items.push(defaultItem);
