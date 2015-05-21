@@ -203,7 +203,10 @@ module DataBinding{
 
         public add(defaultItem?){
             var items = this.source.getValue(this.path);
-            if (items === undefined) return;
+            if (items === undefined) {
+                this.source.setValue(this.path, []);
+                items = this.source.getValue(this.path);
+            }
 
             if (defaultItem === undefined) defaultItem = {};
             items.push(defaultItem);
