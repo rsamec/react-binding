@@ -180,6 +180,9 @@ var DataBinding;
             get: function () {
                 return this.parentBinding.notifyChange;
             },
+            set: function (value) {
+                this.parentBinding.notifyChange = value;
+            },
             enumerable: true,
             configurable: true
         });
@@ -255,6 +258,9 @@ var DataBinding;
         Object.defineProperty(PathParentBinding.prototype, "notifyChange", {
             get: function () {
                 return this.parentBinding.notifyChange;
+            },
+            set: function (value) {
+                this.parentBinding.notifyChange = value;
             },
             enumerable: true,
             configurable: true

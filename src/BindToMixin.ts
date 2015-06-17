@@ -184,6 +184,7 @@ module DataBinding{
         //wrapped properties - delegate call to parent
         public get source():IPathObjectBinder {return this.parentBinding.source;}
         public get notifyChange(){return this.parentBinding.notifyChange;}
+        public set notifyChange(value:INotifyChange){this.parentBinding.notifyChange = value;}
 
         //concatenate path
         public get path():string {
@@ -237,6 +238,7 @@ module DataBinding{
         //wrapped properties - delegate call to parent
         public get source():IPathObjectBinder {return this.parentBinding.source;}
         public get notifyChange(){return this.parentBinding.notifyChange;}
+        public set notifyChange(value:INotifyChange){this.parentBinding.notifyChange = value;}
         public get requestChange():IRequestChange {return (value)=>{this.value=value;}}
         //concatenate path
         public get path():string {
