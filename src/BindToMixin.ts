@@ -334,7 +334,7 @@ module DataBinding{
          * @param converterParams - parameters used by converter
          * @returns {DataBinding.PathObjectBinding}
          */
-        public bindToState(key, path,converter?:IValueConverter,converterParams?):IPathObjectBinding {
+        public bindToState(key, path?,converter?:IValueConverter,converterParams?):IPathObjectBinding {
             return new PathObjectBinding(
                 this["state"][key],
                 path,
