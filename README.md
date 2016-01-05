@@ -74,7 +74,7 @@ __minimal example__
 
 ``` js
 import React from 'react';
-import {Binder} from 'react-binding'
+import Binder from 'react-binding'
 
 var Form = React.createClass({
   getInitialState: function () {
@@ -132,8 +132,8 @@ It enables to bind to complex object with nested properties and reuse bindings i
 
 +   binding to state at root level
 ``` js
-  <PersonComponent personModel={Binder.bindToState("data","Employee")} />
-  <PersonComponent personModel={Binder.bindToState("data","Deputy")} />
+  <PersonComponent personModel={Binder.bindToState(this,"data","Employee")} />
+  <PersonComponent personModel={Binder.bindToState(this,"data","Deputy")} />
 ```
 
 +   binding to parent
