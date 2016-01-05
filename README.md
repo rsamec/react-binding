@@ -2,8 +2,6 @@
 
 React-binding is lightweight utility for two-way data binding in [React][react].
 
-Note: React-binding as mixins - use npm install react-binding@0.6.4
-
 ```js
 import Binder from 'react-binding';
 ```
@@ -17,6 +15,14 @@ Binder.bindTo(employee,"Contact.Email");
 Binder.bindToArray(employee,"Hobbies");
 
 ```
+## Features:
+
++   No dependencies.
++   Minimal interface - using path with dot notation
++   Support for complex objects
++   Support for  collection-based structures - arrays and lists
++   Support for value converters.
++   Lightweight.  
 
 [BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
@@ -95,6 +101,9 @@ React.render(
 );
 
 ```
+
+__Note__: React-binding as mixins - use npm install react-binding@0.6.4
+
 # Overview
 
 ### bindToState(key,pathExpression)
