@@ -32,6 +32,7 @@ gulp.task('bower', function() {
     return tsResult.js
         .pipe(browserify({
             insertGlobals : true,
+            standalone:'Binder',
             debug : false
         }))
         .pipe(rename('react-binding.js'))
