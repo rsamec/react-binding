@@ -37,7 +37,7 @@ ReactDOM.render(
 +   No need to define initial values, nested structures. Binder creates this for you.
 +   Lightweight.  
 
-[BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
+[react-binding](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
 +   object properties with path expression (dot notation)
     +   Binder.bindToState(this,"data","__Employee.FirstName__");
