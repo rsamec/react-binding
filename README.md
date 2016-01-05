@@ -2,26 +2,39 @@
 
 React-binding is lightweight utility for two-way data binding in [React][react].
 
-```js
+``` js
+import React from 'react';
+import ReactDOM from 'react-dom';
 import Binder from 'react-binding';
-```
 
-```js
+export default class Form extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {data: {}};
+  },
+  render {
+    return (
+      <div>
+        <input valueLink={Binder.bindToState(this,"data", "Employee.FirstName")} />
+        <div>FirstName: {this.state.data.Employee.FirstName}</div>
+      </div>
+    )}
+});
 
-Binder.bindToState(this,"data","Employee.FirstName");
-Binder.bindToArrayState(this,"data","Hobbies");
-
-Binder.bindTo(employee,"Contact.Email");
-Binder.bindToArray(employee,"Hobbies");
+ReactDOM.render(
+  <Form />,
+  document.getElementById('content')
+);
 
 ```
 ## Features:
 
 +   No dependencies.
-+   Minimal interface - using path with dot notation
-+   Support for complex objects
-+   Support for  collection-based structures - arrays and lists
++   Minimal interface - using path with dot notation.
++   Support for complex objects.
++   Support for  collection-based structures - arrays and lists.
 +   Support for value converters.
++   No need to define initial values, nested structures. Binder creates this for you.
 +   Lightweight.  
 
 [BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
@@ -80,22 +93,24 @@ __minimal example__
 
 ``` js
 import React from 'react';
-import Binder from 'react-binding'
+import ReactDOM from 'react-dom';
+import Binder from 'react-binding';
 
-var Form = React.createClass({
-  getInitialState: function () {
-    return {data: {}}
+export default class Form extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {data: {}};
   },
-  render: function () {
+  render {
     return (
       <div>
-        <input valueLink={Binder.bindToState(this,"data", "FirstName")} />
-        <div>FirstName: {this.state.data.FirstName}</div>
+        <input valueLink={Binder.bindToState(this,"data", "Employee.FirstName")} />
+        <div>FirstName: {this.state.data.Employee.FirstName}</div>
       </div>
     )}
 });
 
-React.render(
+ReactDOM.render(
   <Form />,
   document.getElementById('content')
 );
