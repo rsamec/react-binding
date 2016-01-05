@@ -5,9 +5,10 @@ var replace = require('gulp-regex-replace');
 var ts = require('gulp-typescript');
 var merge = require('merge2');
 var rename = require("gulp-rename");
+var browserify = require('gulp-browserify');
 
 gulp.task('npm', function() {
-    var tsResult = gulp.src('src/BindToMixin.ts')
+    var tsResult = gulp.src('src/DataBinding.ts')
         .pipe(ts({
             declarationFiles: true,
             noExternalResolve: true,
@@ -16,11 +17,11 @@ gulp.task('npm', function() {
         }));
 
     return tsResult.js
-        .pipe(replace({regex:'module.exports = DataBinding;', replace:'module.exports = BindToMixin;'}))
+        .pipe(rename('index.js'))
         .pipe(gulp.dest('dist'));
 });
 gulp.task('bower', function() {
-    var tsResult = gulp.src('src/BindToMixin.ts')
+    var tsResult = gulp.src('src/DataBinding.ts')
         .pipe(ts({
             declarationFiles: true,
             noExternalResolve: true,
@@ -29,9 +30,12 @@ gulp.task('bower', function() {
         }));
 
     return tsResult.js
-        .pipe(replace({regex:'module.exports = DataBinding;', replace:''}))
+        .pipe(browserify({
+            insertGlobals : true,
+            debug : false
+        }))
         .pipe(rename('react-binding.js'))
-        .pipe(gulp.dest('dist'));
+        .pipe(gulp.dest('dist'))
 });
 
 

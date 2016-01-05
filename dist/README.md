@@ -1,26 +1,52 @@
 # react-binding
 
-React-binding is lightweight mixin for two-way data binding in [React][react].
+React-binding is lightweight utility for two-way data binding in [React][react].
+
+Note: React-binding as mixins - use npm install react-binding@0.6.4
+
+```js
+import {Binder} from 'react-binding'
+```
+
+```js
+
+Binder.bindToState(this,"data","__Employee.FirstName__");
+Binder.bindToArrayState(this,"data","__Hobbies__");
+
+Binder.bindTo(__employee__,"__Contact.Email__");
+Binder.bindToArray(__employee__,"__Hobbies__");
+
+```
+
+```js
+
+Binder.bindToState(this,"data","__Employee.FirstName__");
+Binder.bindToArrayState(this,"data","__Hobbies__");
+
+Binder.bindTo(__employee__,"__Contact.Email__");
+Binder.bindToArray(__employee__,"__Hobbies__");
+
+```
 
 [BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
 +   object properties with path expression (dot notation)
-    +   this.bindToState("data","Employee.FirstName");
-    +   this.bindToState("data","Employee.Contact.Email");
-+   complex objects (json) with nested properties
-    +   this.bindTo(employee,"FirstName");
-    +   this.bindTo(employee,"Contact.Email");
+    +   Binder.bindToState(this,"data","__Employee.FirstName__");
+    +   Binder.bindToState(this,"data","__Employee.Contact.Email__");
++   complex objects (json) with __nested properties__
+    +   Binder.bindTo(__employee__,"__FirstName__");
+    +   Binder.bindTo(__employee__,"__Contact.Email__");
 +   collection-based structures - arrays and lists
-    +   model={this.bindTo(employee,"FirstName")}
-        +   this.props.model.items.map(function(item){ return (<Hobby model={hobby}/>);})
-        +   this.props.model.add()
-        +   this.props.model.remove(item)
+    +   model={Binder.bindArrayToState(this,"data","__Hobbies__")}
+        +   this.props.model.__items__.map(function(item){ return (<Hobby model={hobby}/>);})
+        +   this.props.model.__add()__
+        +   this.props.model.__remove(item)__
 +   supports for "value/requestChange" interface also to enable to use [ReactLink][valueLink] attribute
-    +   valueLink={this.bindTo(employee,"FirstName")}
+    +   valueLink={Binder.bindTo(employee,"FirstName")}
 +   enables binding with value converters
-    +   supports both directions - format (toView) and parse (fromView)
-    +   support for converter parameter - valueLink={this.bindToState("data", "Duration.From",converter, "DD.MM.YYYY")}
-    +   converter parameter can be data-bound - valueLink={this.bindToState("data", "Duration.From",converter, this.state.format)}
+    +   supports both directions - __format__ (toView) and __parse__ (fromView)
+    +   support for converter parameter - valueLink={Binder.bindToState(this,"data", "Duration.From",__converter, "DD.MM.YYYY"__)}
+    +   converter parameter can be data-bound - valueLink={Binder.bindToState(this,"data", "Duration.From",converter, __this.state.format__)}
 +   usable with any css frameworks
     +   [react-bootstrap][reactBootstrap]
     +   [material-ui][materialUi]
@@ -54,6 +80,31 @@ npm install reactify
 browserify ./index.js > bundle.js
 ```
 
+__minimal example__
+
+``` js
+import React from 'react';
+import {Binder} from 'react-binding'
+
+var Form = React.createClass({
+  getInitialState: function () {
+    return {data: {}}
+  },
+  render: function () {
+    return (
+      <div>
+        <input valueLink={Binder.bindToState(this,"data", "FirstName")} />
+        <div>FirstName: {this.state.data.FirstName}</div>
+      </div>
+    )}
+});
+
+React.render(
+  <Form />,
+  document.getElementById('content')
+);
+
+```
 # Overview
 
 ### bindToState(key,pathExpression)
@@ -62,13 +113,13 @@ It enables to bind to object property with path expression
 
 +   using [ReactLink][valueLink]
 ``` js
-<input type='text' valueLink={this.bindToState("data","Employee.Contact.Email")} />
+<input type='text' valueLink={Binder.bindToState(this,"data","Employee.Contact.Email")} />
 ```
 
 +   without [ReactLink][valueLink]
 
 ``` js
-<TextBoxInput model={this.bindToState("data","Employee.Contact.Email")} />
+<TextBoxInput model={Binder.bindToState(this,"data","Employee.Contact.Email")} />
 ```
 
 ``` js
@@ -91,25 +142,24 @@ It enables to bind to complex object with nested properties and reuse bindings i
 
 +   binding to state at root level
 ``` js
-  <PersonComponent personModel={this.bindToState("data","Employee")} />
-  <PersonComponent personModel={this.bindToState("data","Deputy")} />
+  <PersonComponent personModel={Binder.bindToState("data","Employee")} />
+  <PersonComponent personModel={Binder.bindToState("data","Deputy")} />
 ```
 
 +   binding to parent
 ``` js
-  <input type='text' valueLink={this.bindTo(this.props.personModel,"Contact.Email")} />
+  <input type='text' valueLink={Binder.bindTo(this.props.personModel,"Contact.Email")} />
 ```
 
 +  reuse bindings in component
 ``` js
 var PersonComponent = React.createClass({
-  mixins:[BindToMixin],
   render: function() {
     return (
       <div>
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"FirstName")} />
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"LastName")} />
-        <input type='text' valueLink={this.bindTo(this.props.personModel,"Contact.Email")} />
+        <input type='text' valueLink={Binder.bindTo(this.props.personModel,"FirstName")} />
+        <input type='text' valueLink={Binder.bindTo(this.props.personModel,"LastName")} />
+        <input type='text' valueLink={Binder.bindTo(this.props.personModel,"Contact.Email")} />
       </div>
     );
   }
@@ -124,7 +174,7 @@ It enables binding to collection-based structures (array). It enables to add and
 +   binding to array
 
 ``` js
-    <HobbyList model={this.bindArrayToState("data","Hobbies")} />
+    <HobbyList model={Binder.bindArrayToState(this,"data","Hobbies")} />
 ```
 
 +   access items (this.props.model.items)
@@ -159,6 +209,47 @@ It enables binding to collection-based structures (array). It enables to add and
      },
 ```
 
+### bindArrayTo(parent,pathExpression)
+
+It enables binding to collection-based structures (array) for nested arrays. It enables to add and remove items.
+
++   binding to array
+
+``` js
+    <HobbyList model={Binder.bindArrayTo(this,parent,"Hobbies")} />
+```
+
++   access items (this.props.model.items)
+
+``` js
+    var HobbyList = React.createClass({
+        render: function() {
+            if (this.props.model.items === undefined) return <span>There are no items.</span>;
+
+            var hobbies = this.props.model.items.map(function(hobby, index) {
+                return (
+                    <Hobby model={hobby} key={index} onDelete={this.handleDelete} />
+                );
+            },this);
+            return (
+                <div>{hobbies}</div>
+            );
+        }
+    });
+
+```
++   add new items (this.props.model.add(newItem?))
+``` js
+     handleAdd: function(){
+            return this.props.model.add();
+     },
+```
++   remove exiting items  (this.props.model.props.delete(item))
+``` js
+     handleDelete: function(hobby){
+            return this.props.model.remove(hobby);
+     },
+```
 ### Value converters
 
 
@@ -169,7 +260,7 @@ Value converters
 
 Example - date converter -> using parameters 'dateFormat' is optional
 
-{% highlight js %}
+``` js
 var dateConverter = function() {
   this.parse = function (input, dateFormat) {
     if (!!!input) return undefined;
@@ -183,7 +274,16 @@ var dateConverter = function() {
     return moment(input).format(dateFormat);
   }
 }
-{% endhighlight %}
+```
+
+using converter
+
+``` js
+    <DatePicker label="From" model={Binder.bindToState(this,"data", "Duration.From", converter, 'DD.MM.YYYY')} error={this.validationResult().Duration.From}  />
+    <DatePicker label="To" model={Binder.bindToState(this,"data", "Duration.To", converter, 'DD.MM.YYYY')}  error={this.validationResult().Duration.To} />
+```
+
+[try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/preview)
 
 # Examples
 
@@ -202,7 +302,7 @@ hobby form with validation using [business-rules-engine][bre]
 
 value converters
 
-+   date picker - [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/)
++   date picker - [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/preview)
 
 ## Contact
 

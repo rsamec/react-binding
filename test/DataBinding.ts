@@ -1,9 +1,8 @@
 ///<reference path='../typings/mocha/mocha.d.ts'/>
 ///<reference path='../typings/node/node.d.ts'/>
-///<reference path='../src/BindToMixin.ts'/>
+///<reference path='../src/DataBinding.ts'/>
 
-
-var BindTo = require('../src/BindToMixin.js');
+import {DataBinding as BindTo} from '../src/DataBinding';
 var expect1 = require('expect.js');
 
 class DateValueConverter
@@ -458,3 +457,4 @@ describe('DataBinding', function () {
         expect1(data.Data.Vacation.To.toISOString().slice(0,10)).to.equal(toChanged.toISOString().slice(0,10));
     });
 });
+
