@@ -383,7 +383,7 @@ export const DataBinding =  {
  *      +   material-ui
  *
  */
-export default class Binder {
+export class Binder {
 
     static createStateKeySetter(component, key) {
         var partialState = {};
@@ -519,3 +519,4 @@ export default class Binder {
         return new ArrayParentBinding(parent, path);
     }
 }
+export default Binder;

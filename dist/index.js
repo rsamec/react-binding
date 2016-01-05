@@ -480,5 +480,6 @@ var Binder = (function () {
     };
     return Binder;
 })();
+exports.Binder = Binder;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Binder;

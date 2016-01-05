@@ -5,26 +5,16 @@ React-binding is lightweight utility for two-way data binding in [React][react].
 Note: React-binding as mixins - use npm install react-binding@0.6.4
 
 ```js
-import {Binder} from 'react-binding'
+import Binder from 'react-binding';
 ```
 
 ```js
 
-Binder.bindToState(this,"data","__Employee.FirstName__");
-Binder.bindToArrayState(this,"data","__Hobbies__");
+Binder.bindToState(this,"data","Employee.FirstName");
+Binder.bindToArrayState(this,"data","Hobbies");
 
-Binder.bindTo(__employee__,"__Contact.Email__");
-Binder.bindToArray(__employee__,"__Hobbies__");
-
-```
-
-```js
-
-Binder.bindToState(this,"data","__Employee.FirstName__");
-Binder.bindToArrayState(this,"data","__Hobbies__");
-
-Binder.bindTo(__employee__,"__Contact.Email__");
-Binder.bindToArray(__employee__,"__Hobbies__");
+Binder.bindTo(employee,"Contact.Email");
+Binder.bindToArray(employee,"Hobbies");
 
 ```
 

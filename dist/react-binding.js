@@ -1878,10 +1878,11 @@ var Binder = (function () {
     };
     return Binder;
 })();
+exports.Binder = Binder;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Binder;
 
-}).call(this,_dereq_("qC859L"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/fake_7dde48e7.js","/")
+}).call(this,_dereq_("qC859L"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/fake_19ac1faa.js","/")
 },{"buffer":2,"qC859L":4}]},{},[5])
 (5)
 });
