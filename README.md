@@ -2,23 +2,42 @@
 
 React-binding is lightweight utility for two-way data binding in [React][react].
 
-Note: React-binding as mixins - use npm install react-binding@0.6.4
-
-```js
+``` js
+import React from 'react';
+import ReactDOM from 'react-dom';
 import Binder from 'react-binding';
+
+export default class Form extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {data: {}};
+  },
+  render {
+    return (
+      <div>
+        <input valueLink={Binder.bindToState(this,"data", "Employee.FirstName")} />
+        <div>FirstName: {this.state.data.Employee.FirstName}</div>
+      </div>
+    )}
+});
+
+ReactDOM.render(
+  <Form />,
+  document.getElementById('content')
+);
+
 ```
+## Features:
 
-```js
++   No dependencies.
++   Minimal interface - using path with dot notation.
++   Support for complex objects.
++   Support for  collection-based structures - arrays and lists.
++   Support for value converters.
++   No need to define initial values, nested structures. Binder creates this for you.
++   Lightweight.  
 
-Binder.bindToState(this,"data","Employee.FirstName");
-Binder.bindToArrayState(this,"data","Hobbies");
-
-Binder.bindTo(employee,"Contact.Email");
-Binder.bindToArray(employee,"Hobbies");
-
-```
-
-[BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
+[react-binding](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
 +   object properties with path expression (dot notation)
     +   Binder.bindToState(this,"data","__Employee.FirstName__");
@@ -74,27 +93,32 @@ __minimal example__
 
 ``` js
 import React from 'react';
-import {Binder} from 'react-binding'
+import ReactDOM from 'react-dom';
+import Binder from 'react-binding';
 
-var Form = React.createClass({
-  getInitialState: function () {
-    return {data: {}}
+export default class Form extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {data: {}};
   },
-  render: function () {
+  render {
     return (
       <div>
-        <input valueLink={Binder.bindToState(this,"data", "FirstName")} />
-        <div>FirstName: {this.state.data.FirstName}</div>
+        <input valueLink={Binder.bindToState(this,"data", "Employee.FirstName")} />
+        <div>FirstName: {this.state.data.Employee.FirstName}</div>
       </div>
     )}
 });
 
-React.render(
+ReactDOM.render(
   <Form />,
   document.getElementById('content')
 );
 
 ```
+
+__Note__: React-binding as mixins - use npm install react-binding@0.6.4
+
 # Overview
 
 ### bindToState(key,pathExpression)
@@ -132,8 +156,8 @@ It enables to bind to complex object with nested properties and reuse bindings i
 
 +   binding to state at root level
 ``` js
-  <PersonComponent personModel={Binder.bindToState("data","Employee")} />
-  <PersonComponent personModel={Binder.bindToState("data","Deputy")} />
+  <PersonComponent personModel={Binder.bindToState(this,"data","Employee")} />
+  <PersonComponent personModel={Binder.bindToState(this,"data","Deputy")} />
 ```
 
 +   binding to parent
