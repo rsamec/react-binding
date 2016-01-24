@@ -182,6 +182,16 @@
 
             if (this.notifyChange !== undefined) this.notifyChange();
         }
+        public splice(start:number,deleteCount:number,elementsToAdd?:any){
+            var items = this.path === undefined ? this.sourceObject : this.source.getValue(this.path);
+            if (items === undefined) return;
+            return elementsToAdd?items.splice(start, deleteCount, elementsToAdd):items.splice(start,deleteCount);
+
+            //if (this.notifyChange !== undefined) this.notifyChange();
+        }
+        public move(x,y){
+            this.splice(y, 0, this.splice(x,1)[0]);
+        }
     }
 
     /**

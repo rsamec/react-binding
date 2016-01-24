@@ -368,6 +368,213 @@ describe('DataBinding', function () {
 
     });
 
+    it('binding arrays - move up', function () {
+
+        var initValues1:any = mapObject(initValues,function(item){return item + "1"});
+        var initValues2:any = mapObject(initValues,function(item){return item + "2"});
+        var initValues3:any = mapObject(initValues,function(item){return item + "3"});
+
+        //when
+        var data = {
+            Data: {
+                "People": [
+                    {
+                        "Person": {
+                            "FirstName": initValues1.firstName,
+                            "LastName": initValues1.lastName,
+                            "Contact": {
+                                "Email": initValues1.email
+                            }
+                        }
+                    },
+                    {
+                        "Person": {
+                            "FirstName": initValues2.firstName,
+                            "LastName": initValues2.lastName,
+                            "Contact": {
+                                "Email": initValues2.email
+                            }
+                        }
+                    },
+                    {
+                        "Person": {
+                            "FirstName": initValues3.firstName,
+                            "LastName": initValues3.lastName,
+                            "Contact": {
+                                "Email": initValues3.email
+                            }
+                        }
+                    }
+                ]
+            }
+        };
+
+        //exec
+        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+        //root.move(0,2);
+        root.move(0,1);
+        root.move(1,2);
+
+        //first row
+        var row = root.items[0];
+        var person = new BindTo.PathParentBinding(row,"Person");
+        var firstName = new BindTo.PathParentBinding(person,"FirstName");
+        var lastName = new BindTo.PathParentBinding(person,"LastName");
+        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        var nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,initValues2,changedValues);
+
+        //second row
+        row = root.items[1];
+        person = new BindTo.PathParentBinding(row,"Person");
+        firstName = new BindTo.PathParentBinding(person,"FirstName");
+        lastName = new BindTo.PathParentBinding(person,"LastName");
+        email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,initValues3,changedValues);
+
+        //second row
+        row = root.items[2];
+        person = new BindTo.PathParentBinding(row,"Person");
+        firstName = new BindTo.PathParentBinding(person,"FirstName");
+        lastName = new BindTo.PathParentBinding(person,"LastName");
+        email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,initValues1,changedValues);
+
+
+    });
+    it('binding arrays - move down', function () {
+
+        var initValues1:any = mapObject(initValues,function(item){return item + "1"});
+        var initValues2:any = mapObject(initValues,function(item){return item + "2"});
+        var initValues3:any = mapObject(initValues,function(item){return item + "3"});
+
+        //when
+        var data = {
+            Data: {
+                "People": [
+                    {
+                        "Person": {
+                            "FirstName": initValues1.firstName,
+                            "LastName": initValues1.lastName,
+                            "Contact": {
+                                "Email": initValues1.email
+                            }
+                        }
+                    },
+                    {
+                        "Person": {
+                            "FirstName": initValues2.firstName,
+                            "LastName": initValues2.lastName,
+                            "Contact": {
+                                "Email": initValues2.email
+                            }
+                        }
+                    },
+                    {
+                        "Person": {
+                            "FirstName": initValues3.firstName,
+                            "LastName": initValues3.lastName,
+                            "Contact": {
+                                "Email": initValues3.email
+                            }
+                        }
+                    }
+                ]
+            }
+        };
+
+        //exec
+        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+
+        root.move(2,1);
+        root.move(1,0);
+        //root.move(2,0);
+
+        //first row
+        var row = root.items[0];
+        var person = new BindTo.PathParentBinding(row,"Person");
+        var firstName = new BindTo.PathParentBinding(person,"FirstName");
+        var lastName = new BindTo.PathParentBinding(person,"LastName");
+        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        var nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,initValues3,changedValues);
+
+        //second row
+        row = root.items[1];
+        person = new BindTo.PathParentBinding(row,"Person");
+        firstName = new BindTo.PathParentBinding(person,"FirstName");
+        lastName = new BindTo.PathParentBinding(person,"LastName");
+        email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,initValues1,changedValues);
+
+        //second row
+        row = root.items[2];
+        person = new BindTo.PathParentBinding(row,"Person");
+        firstName = new BindTo.PathParentBinding(person,"FirstName");
+        lastName = new BindTo.PathParentBinding(person,"LastName");
+        email = new BindTo.PathParentBinding(person,"Contact.Email");
+
+
+        nestedBindings = {
+            root:row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings,initValues2,changedValues);
+
+
+    });
     it('bind dates with value convertors', function () {
 
         var fromDefault = new Date(2015, 0, 1);
