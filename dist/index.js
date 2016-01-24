@@ -241,6 +241,16 @@ var ArrayParentBinding = (function () {
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
+    ArrayParentBinding.prototype.splice = function (start, deleteCount, elementsToAdd) {
+        var items = this.source.getValue(this.path);
+        if (items === undefined)
+            return;
+        return elementsToAdd ? items.splice(start, deleteCount, elementsToAdd) : items.splice(start, deleteCount);
+        //if (this.notifyChange !== undefined) this.notifyChange();
+    };
+    ArrayParentBinding.prototype.move = function (x, y) {
+        this.splice(y, 0, this.splice(x, 1)[0]);
+    };
     return ArrayParentBinding;
 })();
 exports.ArrayParentBinding = ArrayParentBinding;

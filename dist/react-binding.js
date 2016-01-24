@@ -1639,6 +1639,16 @@ var ArrayParentBinding = (function () {
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
+    ArrayParentBinding.prototype.splice = function (start, deleteCount, elementsToAdd) {
+        var items = this.source.getValue(this.path);
+        if (items === undefined)
+            return;
+        return elementsToAdd ? items.splice(start, deleteCount, elementsToAdd) : items.splice(start, deleteCount);
+        //if (this.notifyChange !== undefined) this.notifyChange();
+    };
+    ArrayParentBinding.prototype.move = function (x, y) {
+        this.splice(y, 0, this.splice(x, 1)[0]);
+    };
     return ArrayParentBinding;
 })();
 exports.ArrayParentBinding = ArrayParentBinding;
@@ -1892,7 +1902,7 @@ exports.Binder = Binder;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Binder;
 
-}).call(this,_dereq_("qC859L"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/fake_a32c8bdf.js","/")
+}).call(this,_dereq_("qC859L"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/fake_c5ec8bd3.js","/")
 },{"buffer":2,"qC859L":4}]},{},[5])
 (5)
 });
