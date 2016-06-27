@@ -85,6 +85,8 @@ describe('DataBinding', function () {
         expect1(sourceObj.Person.FirstName).to.equal(changedValues.firstName);
         expect1(sourceObj.Person.LastName).to.equal(changedValues.lastName);
         expect1(sourceObj.Person.Contact.Email).to.equal(changedValues.email);
+
+            
     };
 
     it('bind to properties by path', function () {
@@ -123,7 +125,8 @@ describe('DataBinding', function () {
     });
 
     it('bind to properties by path - empty object', function () {
-        //when
+
+       //when
         var data = {
             Data: {}
         };

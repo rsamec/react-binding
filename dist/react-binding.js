@@ -1648,6 +1648,8 @@ var ArrayParentBinding = (function () {
     };
     ArrayParentBinding.prototype.move = function (x, y) {
         this.splice(y, 0, this.splice(x, 1)[0]);
+        if (this.notifyChange !== undefined)
+            this.notifyChange();
     };
     return ArrayParentBinding;
 })();
@@ -1902,7 +1904,7 @@ exports.Binder = Binder;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Binder;
 
-}).call(this,_dereq_("qC859L"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/fake_c5ec8bd3.js","/")
+}).call(this,_dereq_("qC859L"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/fake_33c4d9d7.js","/")
 },{"buffer":2,"qC859L":4}]},{},[5])
 (5)
 });

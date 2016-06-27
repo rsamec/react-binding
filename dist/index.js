@@ -250,6 +250,8 @@ var ArrayParentBinding = (function () {
     };
     ArrayParentBinding.prototype.move = function (x, y) {
         this.splice(y, 0, this.splice(x, 1)[0]);
+        if (this.notifyChange !== undefined)
+            this.notifyChange();
     };
     return ArrayParentBinding;
 })();

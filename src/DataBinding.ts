@@ -2,107 +2,111 @@
  * Two-way data binding for React.
  */
 
+/**
+ It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
+ */
+export interface IPathObjectBinder {
     /**
-     It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
+     It gets value at the passed path expression.
      */
-    export interface IPathObjectBinder {
-        /**
-         It gets value at the passed path expression.
-         */
-        getValue(path:string)
-        /**
-         It sets the passed value at the passed path.
-         */
-        setValue(path:string, value:any);
-    }
+    getValue(path: string)
     /**
-     It represents change notification function. It is called whenever there is a change.
+     It sets the passed value at the passed path.
      */
-    export interface INotifyChange {(any?):void
+    setValue(path: string, value: any);
+}
+/**
+ It represents change notification function. It is called whenever there is a change.
+ */
+export interface INotifyChange {
+    (any?): void
+}
+
+/**
+ It represents change notifikcation function with changed value. It supports valueLink interface
+ */
+export interface IRequestChange {
+    (any): void
+}
+
+/**
+ It represents binding to property at source object at a given path.
+ */
+export interface IPathObjectBinding {
+    value: any;
+    source: IPathObjectBinder;
+
+    notifyChange?: INotifyChange;
+    requestChange?: IRequestChange;
+
+    valueConverter?: IValueConverter;
+    path?: any;
+}
+
+/**
+ It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
+ */
+export class PathObjectBinder implements IPathObjectBinder {
+
+    constructor(private source: any) {
     }
 
-    /**
-     It represents change notifikcation function with changed value. It supports valueLink interface
-     */
-    export interface IRequestChange {(any):void
+    public getValue(path: string) {
+        var parent = this.getParent(path);
+        if (parent === undefined) return;
+        var property = PathObjectBinder.getProperty(path);
+        return parent[property];
     }
 
-    /**
-     It represents binding to property at source object at a given path.
-     */
-    export interface IPathObjectBinding {
-        value:any;
-        source:IPathObjectBinder;
-
-        notifyChange?:INotifyChange;
-        requestChange?:IRequestChange;
-
-        valueConverter?:IValueConverter;
-        path?:any;
+    public setValue(path: string, value: string) {
+        var parent = this.getParent(path);
+        if (parent === undefined) return;
+        var property = PathObjectBinder.getProperty(path);
+        parent[property] = value;
     }
 
-    /**
-     It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
-     */
-    export class PathObjectBinder implements IPathObjectBinder {
-
-        constructor(private source:any) {
-        }
-
-        public getValue(path:string) {
-            var parent = this.getParent(path);
-            if (parent === undefined) return;
-            var property = PathObjectBinder.getProperty(path);
-            return parent[property];
-        }
-
-        public setValue(path:string, value:string) {
-            var parent = this.getParent(path);
-            if (parent === undefined) return;
-            var property = PathObjectBinder.getProperty(path);
-            parent[property] = value;
-        }
-
-        private getParent(path:string) {
-            var last = path.lastIndexOf(".");
-            return last != -1 ? this.string_to_ref(this.source, path.substring(0, last)) : this.source;
-        }
-
-        static getProperty(path):string {
-            var last = path.lastIndexOf(".");
-            return last != -1 ? path.substring(last + 1, path.length) : path;
-        }
-
-        private string_to_ref(obj, s) {
-            var parts = s.split('.');
-
-            //experimental - support for square brackets
-            //var arrayExp = /\[(\d*)\]/;
-            //var firstExp = parts[0];
-            //var matches = arrayExp.exec(firstExp);
-            //var newObj;
-            //if (!!matches){
-            //    firstExp =  firstExp.replace(matches[0],"");
-            //    var newArray = obj[firstExp][matche];
-            //    if (newArray === undefined) newArray = [];
-            //    newObj = newArray[matches[1]];
-            //}
-            //else{
-            //    newObj = obj[firstExp];
-            //    if (newObj === undefined) newObj = obj[firstExp] = {};
-            //}
-            //var newObj = !!matches? obj[firstExp.replace(matches[0],"")][matches[1]]:obj[firstExp];
-
-            var newObj = obj[parts[0]];
-            if (newObj === undefined) newObj = obj[parts[0]] = {};
-            if (!parts[1]) {
-                return newObj
-            }
-            parts.splice(0, 1);
-            var newString = parts.join('.');
-            return this.string_to_ref(newObj, newString);
-        }
+    private getParent(path: string) {
+        var last = path.lastIndexOf(".");
+        return last != -1 ? this.string_to_ref(this.source, path.substring(0, last)) : this.source;
     }
+
+    static getProperty(path): string {
+        var last = path.lastIndexOf(".");
+        return last != -1 ? path.substring(last + 1, path.length) : path;
+    }
+
+    private string_to_ref(obj, s) {
+        var parts = s.split('.');
+
+        //experimental - support for square brackets
+        //var arrayExp = /\[(\d*)\]/;
+        //var firstExp = parts[0];
+        //var matches = arrayExp.exec(firstExp);
+        //var newObj;
+        //if (!!matches){
+        //    firstExp =  firstExp.replace(matches[0],"");
+        //    var newArray = obj[firstExp][matche];
+        //    if (newArray === undefined) newArray = [];
+        //    newObj = newArray[matches[1]];
+        //}
+        //else{
+        //    newObj = obj[firstExp];
+        //    if (newObj === undefined) newObj = obj[firstExp] = {};
+        //}
+        //var newObj = !!matches? obj[firstExp.replace(matches[0],"")][matches[1]]:obj[firstExp];
+
+        var newObj = obj[parts[0]];
+        if (newObj === undefined) newObj = obj[parts[0]] = {};
+        if (!parts[1]) {
+            return newObj
+        }
+        parts.splice(0, 1);
+        var newString = parts.join('.');
+        return this.string_to_ref(newObj, newString);
+    }
+}
+
+
 
     /**
      It represents binding to property at source object at a given path.
@@ -262,6 +266,7 @@
         }
         public move(x,y){
             this.splice(y, 0, this.splice(x,1)[0]);
+            if (this.notifyChange !== undefined) this.notifyChange();
         }
     }
 
