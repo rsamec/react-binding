@@ -1,60 +1,35 @@
-///<reference path='../typings/mocha/mocha.d.ts'/>
-///<reference path='../typings/node/node.d.ts'/>
-///<reference path='../src/DataBinding.ts'/>
+import * as BindTo from '../src/DataBinding';
 
-import {DataBinding as BindTo} from '../src/DataBinding';
+import SimpleBinder from '../src/Binder';
+import MobxBinder from '../src/MobxBinder';
+import FreezerBinder from '../src/FreezerBinder';
+
+import { DateValueConverter, PersonConverter, DateValueSuffixConverter, ArraySizeConverter, ArrayConverter } from './utils/converters';
+
 var expect1 = require('expect.js');
 
-class DateValueConverter
-{
-    format(value){
-        if (value === undefined) return value;
-        return value.toISOString().slice(0, 10);
-    }
-
-    parse(value){
-        if (value === undefined) return value;
-        var regPattern = "\\d{4}\\/\\d{2}\\/\\d{2}";
-        var dateString = value.match(regPattern);
-        return new Date(dateString);
-    }
-}
-
-class DateValueSuffixConverter
-{
-    format(value,parameters){
-        if (value === undefined) return value;
-        if (parameters === undefined) parameters ="";
-        return value.toISOString().slice(0, 10) + parameters;
-    }
-
-    parse(value){
-        if (value === undefined) return value;
-        var regPattern = "\\d{4}\\/\\d{2}\\/\\d{2}";
-        var dateString = value.match(regPattern);
-        return new Date(dateString);
-    }
-};
-var mapObject = function(obj, callback) {
+var mapObject = function (obj, callback) {
     var result = {};
     Object.keys(obj).forEach(function (key) {
         result[key] = callback.call(obj, obj[key], key, obj);
     });
     return result;
 };
-describe('DataBinding', function () {
 
-    var initValues = {firstName:"Roman",lastName:"Samec",email:"email"};
-    var changedValues = { firstName: "Roman changed",lastName: "Samec changed",email:"email changed"};
+var testSuite = (Binder: BindTo.BinderStatic) => {
+    var initValues = { firstName: "Roman", lastName: "Samec", email: "email" };
+    var changedValues = { firstName: "Roman changed", lastName: "Samec changed", email: "email changed" };
 
-    var execAndVerifyPersonProperties = function(bindings, initValues, changedValues){
+    var execAndVerifyPersonProperties = function (bindings, initValues, changedValues) {
 
         var root = bindings["root"];
         var firstName = bindings["firstName"];
         var lastName = bindings["lastName"];
         var email = bindings["email"];
 
-        var sourceObj = root.value;
+        root.source.subscribe((state, previous) => {
+            //console.log(state, previous)
+        });
 
         //verify pathes
         expect1(firstName.path).to.equal("Person.FirstName");
@@ -67,14 +42,14 @@ describe('DataBinding', function () {
         expect1(email.value).to.equal(initValues.email);
 
         //verify initial values at the source object
-        expect1(sourceObj.Person.FirstName).to.equal(initValues.firstName);
-        expect1(sourceObj.Person.LastName).to.equal(initValues.lastName);
-        expect1(sourceObj.Person.Contact.Email).to.equal(initValues.email);
+        expect1(root.value.Person.FirstName).to.equal(initValues.firstName);
+        expect1(root.value.Person.LastName).to.equal(initValues.lastName);
+        expect1(root.value.Person.Contact.Email).to.equal(initValues.email);
 
         //exec -> setter -> change values
-        firstName.value  =  changedValues.firstName;
-        lastName.value  = changedValues.lastName;
-        email.value  = changedValues.email;
+        firstName.value = changedValues.firstName;
+        lastName.value = changedValues.lastName;
+        email.value = changedValues.email;
 
         //verify value getter
         expect1(firstName.value).to.equal(changedValues.firstName);
@@ -82,11 +57,11 @@ describe('DataBinding', function () {
         expect1(email.value).to.equal(changedValues.email);
 
         //verify changed values at the source object
-        expect1(sourceObj.Person.FirstName).to.equal(changedValues.firstName);
-        expect1(sourceObj.Person.LastName).to.equal(changedValues.lastName);
-        expect1(sourceObj.Person.Contact.Email).to.equal(changedValues.email);
+        expect1(root.value.Person.FirstName).to.equal(changedValues.firstName);
+        expect1(root.value.Person.LastName).to.equal(changedValues.lastName);
+        expect1(root.value.Person.Contact.Email).to.equal(changedValues.email);
 
-            
+
     };
 
     it('bind to properties by path', function () {
@@ -104,15 +79,15 @@ describe('DataBinding', function () {
         };
 
         //exec
-        var root = new BindTo.PathObjectBinding(data.Data);
-        var person = new BindTo.PathParentBinding(root,"Person");
-        var firstName = new BindTo.PathParentBinding(person,"FirstName");
-        var lastName = new BindTo.PathParentBinding(person,"LastName");
-        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+        var root = Binder.bindTo(data.Data);
+        var person = Binder.bindTo(root, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
 
 
         var nestedBindings = {
-            root:root,
+            root: root,
             firstName: firstName,
             lastName: lastName,
             email: email
@@ -120,33 +95,33 @@ describe('DataBinding', function () {
 
         //verify
         expect1(person.path).to.equal("Person");
-        execAndVerifyPersonProperties(nestedBindings,initValues,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues, changedValues);
 
     });
 
     it('bind to properties by path - empty object', function () {
 
-       //when
+        //when
         var data = {
             Data: {}
         };
 
         //exec
-        var root = new BindTo.PathObjectBinding(data.Data);
-        var firstName = new BindTo.PathParentBinding(root,"Person.FirstName");
-        var lastName = new BindTo.PathParentBinding(root,"Person.LastName");
-        var email = new BindTo.PathParentBinding(root,"Person.Contact.Email");
+        var root = Binder.bindTo(data.Data);
+        var firstName = Binder.bindTo(root, "Person.FirstName");
+        var lastName = Binder.bindTo(root, "Person.LastName");
+        var email = Binder.bindTo(root, "Person.Contact.Email");
 
 
         var flatBindings = {
-            root:root,
+            root: root,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(flatBindings,{},changedValues);
+        execAndVerifyPersonProperties(flatBindings, {}, changedValues);
 
 
     });
@@ -163,11 +138,11 @@ describe('DataBinding', function () {
     //    };
     //
     //    //exec
-    //    //var root = new BindTo.PathObjectBinding(data.Data);
-    //    //var email = new BindTo.PathParentBinding(root,"Hobbies[0].HobbyName");
+    //    //var root = Binder.bindTo(data.Data);
+    //    //var email = Binder.bindTo(root,"Hobbies[0].HobbyName");
     //
-    //    var row = new BindTo.PathObjectBinding(data,"Data.Hobbies[0]");
-    //    var email = new BindTo.PathParentBinding(row,"HobbyName");
+    //    var row = Binder.bindTo(data,"Data.Hobbies[0]");
+    //    var email = Binder.bindTo(row,"HobbyName");
     //
     //    //verify
     //    expect1(email.path).to.equal("Data.Hobbies[0].HobbyName");
@@ -202,44 +177,44 @@ describe('DataBinding', function () {
         };
 
         //exec
-        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+        var root = Binder.bindArrayTo(data.Data, "People");
 
         //first row
         var row = root.items[0];
-        var person = new BindTo.PathParentBinding(row,"Person");
-        var firstName = new BindTo.PathParentBinding(person,"FirstName");
-        var lastName = new BindTo.PathParentBinding(person,"LastName");
-        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
 
 
         var nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues, changedValues);
 
 
         //second row
         row = root.items[1];
-        person = new BindTo.PathParentBinding(row,"Person");
-        firstName = new BindTo.PathParentBinding(person,"FirstName");
-        lastName = new BindTo.PathParentBinding(person,"LastName");
-        email = new BindTo.PathParentBinding(person,"Contact.Email");
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
 
 
         nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,{},changedValues);
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
     });
 
     it('binding arrays - empty object', function () {
@@ -249,62 +224,62 @@ describe('DataBinding', function () {
         };
 
         //exec
-        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+        var root = Binder.bindArrayTo(data.Data, "People");
 
         root.add();
 
         //first row
         var row = root.items[0];
-        var person = new BindTo.PathParentBinding(row,"Person");
-        var firstName = new BindTo.PathParentBinding(person,"FirstName");
-        var lastName = new BindTo.PathParentBinding(person,"LastName");
-        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
 
 
         var nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,{},changedValues);
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
 
         root.add();
         //second row
         row = root.items[1];
-        person = new BindTo.PathParentBinding(row,"Person");
-        firstName = new BindTo.PathParentBinding(person,"FirstName");
-        lastName = new BindTo.PathParentBinding(person,"LastName");
-        email = new BindTo.PathParentBinding(person,"Contact.Email");
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
 
 
         nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,{},changedValues);
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
     });
     it('binding nested arrays', function () {
 
-       var initValues1:any = mapObject(initValues,function(item){return item + "1"});
-       var initValues2:any = mapObject(initValues,function(item){return item + "2"});
-       var changedValues1:any = mapObject(changedValues,function(item){return item + "1"});
-       var changedValues2:any = mapObject(changedValues,function(item){return item + "2"});
+        var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
+        var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
+        var changedValues1: any = mapObject(changedValues, function (item) { return item + "1" });
+        var changedValues2: any = mapObject(changedValues, function (item) { return item + "2" });
 
         //when
         var data = {
             Data: {
                 "Hobbies": [
                     {
-                        "People":[
+                        "People": [
                             {
-                                "Person":{
+                                "Person": {
                                     "FirstName": initValues1.firstName,
                                     "LastName": initValues1.lastName,
                                     "Contact": {
@@ -329,53 +304,53 @@ describe('DataBinding', function () {
         };
 
         //exec
-        var root = new BindTo.ArrayObjectBinding(data,"Data.Hobbies").items[0];
-        var people = new BindTo.ArrayParentBinding(root,"People");
+        var root = Binder.bindArrayTo(data.Data, "Hobbies").items[0];
+        var people = Binder.bindArrayTo(root, "People");
 
         //first person
         var row = people.items[0];
-        var person = new BindTo.PathParentBinding(row,"Person");
-        var firstName = new BindTo.PathParentBinding(person,"FirstName");
-        var lastName = new BindTo.PathParentBinding(person,"LastName");
-        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
 
 
         var nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues1,changedValues1);
+        execAndVerifyPersonProperties(nestedBindings, initValues1, changedValues1);
 
 
         //second person
         row = people.items[1];
-        person = new BindTo.PathParentBinding(row,"Person");
-        firstName = new BindTo.PathParentBinding(person,"FirstName");
-        lastName = new BindTo.PathParentBinding(person,"LastName");
-        email = new BindTo.PathParentBinding(person,"Contact.Email");
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
 
 
         nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues2,changedValues2);
+        execAndVerifyPersonProperties(nestedBindings, initValues2, changedValues2);
 
     });
 
     it('binding arrays - move up', function () {
 
-        var initValues1:any = mapObject(initValues,function(item){return item + "1"});
-        var initValues2:any = mapObject(initValues,function(item){return item + "2"});
-        var initValues3:any = mapObject(initValues,function(item){return item + "3"});
+        var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
+        var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
+        var initValues3: any = mapObject(initValues, function (item) { return item + "3" });
 
         //when
         var data = {
@@ -413,72 +388,72 @@ describe('DataBinding', function () {
         };
 
         //exec
-        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+        var root = Binder.bindArrayTo(data.Data, "People");
         //root.move(0,2);
-        root.move(0,1);
-        root.move(1,2);
+        root.move(0, 1);
+        root.move(1, 2);
 
         //first row
         var row = root.items[0];
-        var person = new BindTo.PathParentBinding(row,"Person");
-        var firstName = new BindTo.PathParentBinding(person,"FirstName");
-        var lastName = new BindTo.PathParentBinding(person,"LastName");
-        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
 
 
         var nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues2,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues2, changedValues);
 
         //second row
         row = root.items[1];
-        person = new BindTo.PathParentBinding(row,"Person");
-        firstName = new BindTo.PathParentBinding(person,"FirstName");
-        lastName = new BindTo.PathParentBinding(person,"LastName");
-        email = new BindTo.PathParentBinding(person,"Contact.Email");
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
 
 
         nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues3,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues3, changedValues);
 
         //second row
         row = root.items[2];
-        person = new BindTo.PathParentBinding(row,"Person");
-        firstName = new BindTo.PathParentBinding(person,"FirstName");
-        lastName = new BindTo.PathParentBinding(person,"LastName");
-        email = new BindTo.PathParentBinding(person,"Contact.Email");
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
 
 
         nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues1,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues1, changedValues);
 
 
     });
     it('binding arrays - move down', function () {
 
-        var initValues1:any = mapObject(initValues,function(item){return item + "1"});
-        var initValues2:any = mapObject(initValues,function(item){return item + "2"});
-        var initValues3:any = mapObject(initValues,function(item){return item + "3"});
+        var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
+        var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
+        var initValues3: any = mapObject(initValues, function (item) { return item + "3" });
 
         //when
         var data = {
@@ -516,65 +491,65 @@ describe('DataBinding', function () {
         };
 
         //exec
-        var root = new BindTo.ArrayObjectBinding(data,"Data.People");
+        var root = Binder.bindArrayTo(data.Data, "People");
 
-        root.move(2,1);
-        root.move(1,0);
+        root.move(2, 1);
+        root.move(1, 0);
         //root.move(2,0);
 
         //first row
         var row = root.items[0];
-        var person = new BindTo.PathParentBinding(row,"Person");
-        var firstName = new BindTo.PathParentBinding(person,"FirstName");
-        var lastName = new BindTo.PathParentBinding(person,"LastName");
-        var email = new BindTo.PathParentBinding(person,"Contact.Email");
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
 
 
         var nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues3,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues3, changedValues);
 
         //second row
         row = root.items[1];
-        person = new BindTo.PathParentBinding(row,"Person");
-        firstName = new BindTo.PathParentBinding(person,"FirstName");
-        lastName = new BindTo.PathParentBinding(person,"LastName");
-        email = new BindTo.PathParentBinding(person,"Contact.Email");
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
 
 
         nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues1,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues1, changedValues);
 
         //second row
         row = root.items[2];
-        person = new BindTo.PathParentBinding(row,"Person");
-        firstName = new BindTo.PathParentBinding(person,"FirstName");
-        lastName = new BindTo.PathParentBinding(person,"LastName");
-        email = new BindTo.PathParentBinding(person,"Contact.Email");
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
 
 
         nestedBindings = {
-            root:row,
+            root: row,
             firstName: firstName,
             lastName: lastName,
             email: email
         };
 
         //verify
-        execAndVerifyPersonProperties(nestedBindings,initValues2,changedValues);
+        execAndVerifyPersonProperties(nestedBindings, initValues2, changedValues);
 
 
     });
@@ -593,13 +568,13 @@ describe('DataBinding', function () {
             }
         };
         //exec
-        var root = new BindTo.PathObjectBinding(data.Data);
+        var root = Binder.bindTo(data.Data);
 
         //exec
-        var vacation = new BindTo.PathParentBinding(root,"Vacation");
+        var vacation = Binder.bindTo(root, "Vacation");
 
-        var from = new BindTo.PathParentBinding(vacation,"From",new DateValueConverter());
-        var to = new BindTo.PathParentBinding(vacation,"To",new DateValueConverter());
+        var from = Binder.bindTo(vacation, "From", new DateValueConverter());
+        var to = Binder.bindTo(vacation, "To", new DateValueConverter());
 
         //verify
         expect1(from.value).to.equal(fromDefault.toISOString().slice(0, 10));
@@ -607,16 +582,16 @@ describe('DataBinding', function () {
 
 
         //when
-        var fromChanged = new Date(2015,1,13);
-        var toChanged = new Date(2015,1,20);
+        var fromChanged = new Date(2015, 1, 13);
+        var toChanged = new Date(2015, 1, 20);
 
         //exec value
-        from.value  = "2015/02/13";
-        to.value  = "2015/02/20";
+        from.value = "2015/02/13";
+        to.value = "2015/02/20";
 
         //verify
-        expect1(data.Data.Vacation.From.toISOString().slice(0,10)).to.equal(fromChanged.toISOString().slice(0,10));
-        expect1(data.Data.Vacation.To.toISOString().slice(0,10)).to.equal(toChanged.toISOString().slice(0,10));
+        expect1(root.value.Vacation.From.toISOString().slice(0, 10)).to.equal(fromChanged.toISOString().slice(0, 10));
+        expect1(root.value.Vacation.To.toISOString().slice(0, 10)).to.equal(toChanged.toISOString().slice(0, 10));
 
 
     });
@@ -638,16 +613,16 @@ describe('DataBinding', function () {
             }
         };
         //exec
-        var root = new BindTo.PathObjectBinding(data.Data);
+        var root = Binder.bindTo(data.Data);
 
         //exec
-        var vacation = new BindTo.PathParentBinding(root,"Vacation");
+        var vacation = Binder.bindTo(root, "Vacation");
 
-        var converter = new BindTo.CurryConverter(new DateValueSuffixConverter(),formatSuffix);
+        var converter = new BindTo.CurryConverter(new DateValueSuffixConverter(), formatSuffix);
 
 
-        var from = new BindTo.PathParentBinding(vacation,"From",converter);
-        var to = new BindTo.PathParentBinding(vacation,"To",converter);
+        var from = Binder.bindTo(vacation, "From", converter);
+        var to = Binder.bindTo(vacation, "To", converter);
 
         //verify
         expect1(from.value).to.equal(fromDefault.toISOString().slice(0, 10) + formatSuffix);
@@ -655,16 +630,171 @@ describe('DataBinding', function () {
 
 
         //when
-        var fromChanged = new Date(2015,1,13);
-        var toChanged = new Date(2015,1,20);
+        var fromChanged = new Date(2015, 1, 13);
+        var toChanged = new Date(2015, 1, 20);
 
         //exec value
-        from.value  = "2015/02/13" + formatSuffix;
-        to.value  = "2015/02/20" + formatSuffix;
+        from.value = "2015/02/13" + formatSuffix;
+        to.value = "2015/02/20" + formatSuffix;
 
         //verify
-        expect1(data.Data.Vacation.From.toISOString().slice(0,10)).to.equal(fromChanged.toISOString().slice(0,10));
-        expect1(data.Data.Vacation.To.toISOString().slice(0,10)).to.equal(toChanged.toISOString().slice(0,10));
+        expect1(root.value.Vacation.From.toISOString().slice(0, 10)).to.equal(fromChanged.toISOString().slice(0, 10));
+        expect1(root.value.Vacation.To.toISOString().slice(0, 10)).to.equal(toChanged.toISOString().slice(0, 10));
     });
+
+    it('binding arrays - direct array', function () {
+        //when
+        var data = { Employees: [{}, {}] };
+
+
+        //exec
+        var dataRoot = Binder.bindTo(data, "Employees");
+        var root = Binder.bindArrayTo(dataRoot);
+
+
+        //first row
+        var row = root.items[0];
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
+
+
+        var nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
+
+        //root.add();
+        //second row
+        row = root.items[1];
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
+
+
+        nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
+    });
+
+    it('binding arrays - using array size converters', function () {
+        //when
+        var data = { Count: 1 };
+
+
+        //exec
+        var dataRoot = Binder.bindTo(data, "Count");
+        var root = Binder.bindArrayTo(dataRoot, undefined, new ArraySizeConverter());
+
+
+        //first row
+        var row = root.items[0];
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
+
+
+        var nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
+
+        //root.add();
+        dataRoot.value = 2;
+        //second row
+        row = root.items[1];
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
+
+
+        nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
+    });
+
+    it('binding arrays - using array converters', function () {
+        //when
+        var data = { Employees: [{}] };
+
+        //exec
+        var dataRoot = Binder.bindTo(data, "Employees", ArrayConverter);
+        var root = Binder.bindArrayTo(dataRoot);
+
+
+        //first row
+        var row = root.items[0];
+        var person = Binder.bindTo(row, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
+
+
+        var nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
+
+        root.add();
+        //dataRoot.value = 2;
+        //second row
+        row = root.items[1];
+        person = Binder.bindTo(row, "Person");
+        firstName = Binder.bindTo(person, "FirstName");
+        lastName = Binder.bindTo(person, "LastName");
+        email = Binder.bindTo(person, "Contact.Email");
+
+
+        nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
+    });
+}
+
+describe('DataBinding - Freezer provider', function () {
+    testSuite(FreezerBinder);
+});
+describe('DataBinding - Plain object provider', function () {
+    testSuite(SimpleBinder);
 });
 
+describe('DataBinding - Mobx provider', function () {
+    testSuite(MobxBinder);
+});
