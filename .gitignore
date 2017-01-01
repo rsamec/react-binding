@@ -36,3 +36,12 @@ typings
 
 #TypeDoc
 out
+
+#Visual studio code
+launch.json
+settings.json
+tasks.json
+
+#Typescript Compiled
+src/*.js
+test/*.js
