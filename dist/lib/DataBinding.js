@@ -2,18 +2,33 @@
  It represents binding to property at source object at a given path.
  */
 var PathObjectBinding = (function () {
-    function PathObjectBinding(sourceObject, provider, path, notifyChange, valueConverter) {
+    function PathObjectBinding(sourceObject, provider, path, notifyChange, valueConverter, parentNode) {
         this.sourceObject = sourceObject;
         this.provider = provider;
         this.path = path;
         this.notifyChange = notifyChange;
         this.valueConverter = valueConverter;
+        this.parentNode = parentNode;
         this.source = provider(sourceObject);
     }
     Object.defineProperty(PathObjectBinding.prototype, "requestChange", {
         get: function () {
             var _this = this;
             return function (value) { _this.value = value; };
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PathObjectBinding.prototype, "root", {
+        get: function () {
+            return this.parentNode !== undefined ? this.parentNode.root : this;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PathObjectBinding.prototype, "parent", {
+        get: function () {
+            return this.parentNode !== undefined ? this.parentNode : undefined;
         },
         enumerable: true,
         configurable: true
@@ -58,13 +73,27 @@ var ArrayObjectBinding = (function () {
         this.valueConverter = valueConverter;
         this.source = provider(sourceObject);
     }
+    Object.defineProperty(ArrayObjectBinding.prototype, "parent", {
+        get: function () {
+            return undefined;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ArrayObjectBinding.prototype, "root", {
+        get: function () {
+            return this;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(ArrayObjectBinding.prototype, "items", {
         get: function () {
             var items = this.path === undefined ? this.source.getValue() : this.source.getValue(this.path);
             if (items === undefined)
                 return [];
             return items.map(function (item) {
-                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange);
+                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -136,6 +165,20 @@ var ArrayParentBinding = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ArrayParentBinding.prototype, "root", {
+        get: function () {
+            return this.parentBinding.root;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ArrayParentBinding.prototype, "parent", {
+        get: function () {
+            return this.parentBinding;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(ArrayParentBinding.prototype, "notifyChange", {
         get: function () {
             return this.parentBinding.notifyChange;
@@ -171,7 +214,7 @@ var ArrayParentBinding = (function () {
                 return [];
             return items.map(function (item) {
                 //item._parentBinding = this;
-                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange);
+                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -237,6 +280,20 @@ var PathParentBinding = (function () {
     Object.defineProperty(PathParentBinding.prototype, "provider", {
         get: function () {
             return this.parentBinding.provider;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PathParentBinding.prototype, "root", {
+        get: function () {
+            return this.parentBinding.root;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PathParentBinding.prototype, "parent", {
+        get: function () {
+            return this.parentBinding;
         },
         enumerable: true,
         configurable: true
