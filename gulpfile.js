@@ -19,13 +19,13 @@ var tsify = require('tsify');
 gulp.task('scripts', function() {
     var tsResult = gulp.src('src/*.ts')
         .pipe(ts({
-            declaration: false,
+            declaration: true,
             target: 'ES5',
             module: 'commonjs'
         }));
 
     return merge([
-        //tsResult.dts.pipe(gulp.dest('dist/definitions')),
+        tsResult.dts.pipe(gulp.dest('dist/definitions')),
         tsResult.js.pipe(gulp.dest('dist/lib'))
     ]);
 });

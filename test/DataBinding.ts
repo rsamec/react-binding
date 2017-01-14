@@ -302,10 +302,9 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
                 ]
             }
         };
-
         //exec
-        var root = Binder.bindArrayTo(data.Data, "Hobbies").items[0];
-        var people = Binder.bindArrayTo(root, "People");
+        var root = Binder.bindArrayTo(data.Data, "Hobbies");
+        var people = Binder.bindArrayTo(root.items[0], "People");
 
         //first person
         var row = people.items[0];
@@ -313,7 +312,6 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
         var firstName = Binder.bindTo(person, "FirstName");
         var lastName = Binder.bindTo(person, "LastName");
         var email = Binder.bindTo(person, "Contact.Email");
-
 
         var nestedBindings = {
             root: row,
@@ -785,6 +783,121 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
 
         //verify
         execAndVerifyPersonProperties(nestedBindings, {}, changedValues);
+    });
+
+    it('binding - root and parent property', function () {
+
+        //setup
+        const TIME_STAMP = new Date();
+        
+        var data = {
+            Data: {
+                "Person": {
+                    "FirstName": initValues.firstName,
+                    "LastName": initValues.lastName,
+                    "Contact": {
+                        "Email": initValues.email
+                    }
+                }
+            }
+        };
+
+        
+        var root = Binder.bindTo(data.Data);
+        var person = Binder.bindTo(root, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
+
+        //exec
+        root['customCode'] = TIME_STAMP;
+
+        //verify parent
+        expect1(root.parent).to.equal(undefined);
+        expect1(email.parent).to.equal(person);
+        expect1(lastName.parent).to.equal(person);
+        expect1(firstName.parent).to.equal(person);
+        expect1(person.parent).to.equal(root);
+
+        //verify root
+        expect1(email.root['customCode']).to.equal(TIME_STAMP);
+
+
+    });
+
+
+    it('binding - root and parent property - nested arrays', function () {
+
+        //setup
+        const TIME_STAMP = new Date();
+        
+        var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
+        var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
+        var changedValues1: any = mapObject(changedValues, function (item) { return item + "1" });
+        var changedValues2: any = mapObject(changedValues, function (item) { return item + "2" });
+
+        //when
+        var data = {
+            Data: {
+                "Hobbies": [
+                    {
+                        "People": [
+                            {
+                                "Person": {
+                                    "FirstName": initValues1.firstName,
+                                    "LastName": initValues1.lastName,
+                                    "Contact": {
+                                        "Email": initValues1.email
+                                    }
+                                }
+                            },
+                            {
+                                "Person": {
+                                    "FirstName": initValues2.firstName,
+                                    "LastName": initValues2.lastName,
+                                    "Contact": {
+                                        "Email": initValues2.email
+                                    }
+                                }
+                            },
+
+                        ]
+                    }
+                ]
+            }
+        };
+
+        //exec
+        var root = Binder.bindArrayTo(data.Data, "Hobbies");
+        var hobbieRow = root.items[0];
+        var people = Binder.bindArrayTo(hobbieRow, "People");
+
+        //first person
+        var personRow = people.items[0];
+        var person = Binder.bindTo(personRow, "Person");
+        var firstName = Binder.bindTo(person, "FirstName");
+        var lastName = Binder.bindTo(person, "LastName");
+        var email = Binder.bindTo(person, "Contact.Email");
+
+        //exec
+        root['customCode'] = TIME_STAMP;
+
+        //verify parent
+        expect1(root.parent).to.equal(undefined);
+        expect1(email.parent).to.equal(person);
+        expect1(lastName.parent).to.equal(person);
+        expect1(firstName.parent).to.equal(person);
+        expect1(person.parent).to.equal(personRow);
+        
+        expect1(personRow.parent).to.equal(people);
+        expect1(people.parent).to.equal(hobbieRow);
+        expect1(hobbieRow.parent).to.equal(root);
+
+
+
+        //verify root
+        expect1(email.root['customCode']).to.equal(TIME_STAMP);
+
     });
 }
 
