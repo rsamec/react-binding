@@ -1,5 +1,7 @@
 var Freezer = require('freezer-js');
-import { IPathObjectBinder } from './DataBinding';
+import { isArray,get, isObject, isIndex } from 'lodash';
+var castPath = require('lodash/_castPath');
+import { IPathObjectBinder, Path, isPathArray } from './DataBinding';
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
@@ -7,6 +9,7 @@ export default class FreezerPathObjectBinder implements IPathObjectBinder {
 
     private freezer;
     constructor(private source: any) {
+        
         this.freezer = new Freezer(source);
     }
     public subscribe(updateFce) {
@@ -16,43 +19,70 @@ export default class FreezerPathObjectBinder implements IPathObjectBinder {
         );
     }
 
-    public getValue(path?: string) {
+    public getValue(path?: Path) {
         if (path === undefined) return this.freezer.get();
-        var parent = this.getParent(path);
+        var cursorPath = !isPathArray(path) ? castPath(path) : path;
+        if (cursorPath.length === 0) return this.freezer.get();;
+
+        var parent = this.getParent(cursorPath);
+        //console.log(parent);
         if (parent === undefined) return;
-        var property = FreezerPathObjectBinder.getProperty(path);
+        var property = cursorPath[cursorPath.length - 1];
         return parent[property];
+
     }
 
-    public setValue(path: string, value: string) {
-        var parent = this.getParent(path);
+    public setValue(path: Path, value: string) {
+        if (path === undefined) return;
+        var cursorPath = !isPathArray(path) ? castPath(path) : path;
+        if (cursorPath.length === 0) return;
+
+        var parent = this.getParent(cursorPath);
+        //console.log(parent);
         if (parent === undefined) return;
-        var property = FreezerPathObjectBinder.getProperty(path);
-        parent.set(property, value);
+        var property = cursorPath[cursorPath.length - 1];
+        var updated = parent.set(property, value);
+        return updated;
     }
 
-    private getParent(path: string) {
-        var state = this.freezer.get();
-        var last = path.lastIndexOf(".");
-        return last != -1 ? this.string_to_ref(state, path.substring(0, last)) : state;
+    private getParent(cursorPath: Array<string | number>) {
+        if (cursorPath.length == 0) return;
+        if (cursorPath.length == 1) return this.freezer.get();
+        var source = this.freezer.get();
+        var parentPath = cursorPath.slice(0, cursorPath.length - 1);
+        var parent = get(source, parentPath);
+        if (parent !== undefined) return parent;
+
+        var updated = this.setWith(source, parentPath,{});
+        return get(updated, parentPath);
+
     }
 
-    static getProperty(path): string {
-        var last = path.lastIndexOf(".");
-        return last != -1 ? path.substring(last + 1, path.length) : path;
-    }
+    setWith(object: any, path: Array<string | number>, value: any) {
+        const length = path.length;
+        const lastIndex = length - 1;
 
-    private string_to_ref(obj, s) {
-        var parts = s.split('.');
+        let index = -1;
+        let nested = object;
 
-        var newObj = obj[parts[0]];
-        if (newObj === undefined) newObj = obj.set(parts[0], {});
-        if (!parts[1]) {
-            return newObj
+        while (nested != null && ++index < length) {
+            const key = path[index];
+            let newValue = value;
+
+            if (index != lastIndex) {
+                const objValue = nested[key];
+                if (newValue === undefined) {
+                    newValue = isObject(objValue)
+                        ? objValue
+                        : (isIndex(path[index + 1]) ? [] : {});
+                }
+            }
+            //assignValue(nested, key, newValue);
+            var updated = nested.set(key, newValue);
+            nested = updated[key];
         }
-        parts.splice(0, 1);
-        var newString = parts.join('.');
-        return this.string_to_ref(newObj, newString);
+        return nested;
+
     }
 }
 

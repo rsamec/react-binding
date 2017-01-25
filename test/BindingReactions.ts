@@ -64,9 +64,9 @@ describe('DataBinding - Mobx reactions', function () {
             (val) => { console.log(val) }, true);
 
         //verify pathes
-        expect1(firstName.path).to.equal("Person.FirstName");
-        expect1(lastName.path).to.equal("Person.LastName");
-        expect1(email.path).to.equal("Person.Contact.Email");
+        expect1(firstName.path.join(".")).to.equal("Person.FirstName");
+        expect1(lastName.path.join(".")).to.equal("Person.LastName");
+        expect1(email.path.join(".")).to.equal("Person.Contact.Email");
 
         //verify value getter
         // expect1(firstName.value).to.equal(initValues.firstName);

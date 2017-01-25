@@ -1,16 +1,19 @@
+import { get, set, setWith, isArray } from 'lodash';
 import { extendObservable, isObservable, autorun, observable, computed } from 'mobx';
-import { IPathObjectBinder } from './DataBinding';
+import { IPathObjectBinder,Path, isPathArray } from './DataBinding';
+var castPath = require('lodash/_castPath');
+
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
 export default class MobxPathObjectBinder implements IPathObjectBinder {
 
-    private mobxSource;
+    private source;
     private current;
     private previous;
-    constructor(source: any) {
-        this.mobxSource = observable(source);
-        this.current = computed(() => JSON.stringify(this.mobxSource));
+    constructor(sourceParam: any) {
+        this.source = observable(sourceParam);
+        //this.current = computed(() => JSON.stringify(this.mobxSource));
         //console.log('init');
         // autorun(() => { 
         //     console.log(this.json.get());//'safda');
@@ -19,88 +22,64 @@ export default class MobxPathObjectBinder implements IPathObjectBinder {
         // });
     }
     public subscribe(updateFce) {
-        var previousState;
-        if (updateFce !== undefined) autorun(
-            () => {
-                var current = this.current.get()
-                updateFce(current, this.previous);
-                this.previous = current;
-            });
-        //if (updateFce!==undefined) autorun(updateFce);
+        // var previousState;
+        // if (updateFce !== undefined) autorun(
+        //     () => {
+        //         var current = this.current.get()
+        //         updateFce(current, this.previous);
+        //         this.previous = current;
+        //     });
+        // //if (updateFce!==undefined) autorun(updateFce);
     }
-
-    public getValue(path: string) {
-        var parent = this.getParent(path);
+   
+    public getValue(path: Path) {
+        if (path === undefined) return this.source;
+        var cursorPath = !isPathArray(path) ? castPath(path) : path;
+        if (cursorPath.length === 0) return this.source;
+        
+        var parent = this.getParent(cursorPath);
         if (parent === undefined) return;
-        if (path === undefined) return parent;
-        var property = MobxPathObjectBinder.getProperty(path);
+        
+        var property = cursorPath[cursorPath.length -1];
+        
         var value = parent[property];
         if (value === undefined && !parent.hasOwnProperty(property)) {
             this.setValueAsObservable(parent, property);
 
         }
         return parent[property];
+
     }
 
-    public setValue(path: string, value: string) {
-        var parent = this.getParent(path);
-        if (parent === undefined) return;
-        var property = MobxPathObjectBinder.getProperty(path);
-        //parent[property] = observable(value);
+    public setValue(path: Path, value: any) {
+        if (path === undefined) return;
+        var cursorPath = !isPathArray(path)?castPath(path):path;
+        if (cursorPath.length === 0) return;
+        var parent = this.getParent(cursorPath);
+        var property = cursorPath[cursorPath.length -1];
+                
         if (isObservable(parent, property)) {
             parent[property] = value;
             return;
         }
-        var newProps = {};
-        newProps[property] = value;
-        extendObservable(parent, newProps);
-        //console.log(parent[property]);
+        this.setValueAsObservable(parent,property,value);        
+
+    }
+    private getParent(cursorPath:Array<string | number>)
+    {
+        if (cursorPath.length == 0) return;
+        if (cursorPath.length == 1) return this.source; 
+        var parentPath = cursorPath.slice(0, cursorPath.length - 1);
+        var parent = get(this.source, parentPath);
+        if (parent !== undefined) return parent;
+        setWith(this.source, parentPath, {}, Object);       
+        return get(this.source,parentPath);
     }
     private setValueAsObservable(parent: Object, property: string, value?: any) {
         var newProps = {};
         newProps[property] = value;
         extendObservable(parent, newProps);
-    }
+    }    
 
-    private getParent(path: string) {
-        if (path === undefined) return this.mobxSource;
-        var last = path.lastIndexOf(".");
-        return last != -1 ? this.string_to_ref(this.mobxSource, path.substring(0, last)) : this.mobxSource;
-    }
-
-    static getProperty(path): string {
-        var last = path.lastIndexOf(".");
-        return last != -1 ? path.substring(last + 1, path.length) : path;
-    }
-
-    private string_to_ref(obj, s) {
-        var parts = s.split('.');
-
-        //experimental - support for square brackets
-        //var arrayExp = /\[(\d*)\]/;
-        //var firstExp = parts[0];
-        //var matches = arrayExp.exec(firstExp);
-        //var newObj;
-        //if (!!matches){
-        //    firstExp =  firstExp.replace(matches[0],"");
-        //    var newArray = obj[firstExp][matche];
-        //    if (newArray === undefined) newArray = [];
-        //    newObj = newArray[matches[1]];
-        //}
-        //else{
-        //    newObj = obj[firstExp];
-        //    if (newObj === undefined) newObj = obj[firstExp] = {};
-        //}
-        //var newObj = !!matches? obj[firstExp.replace(matches[0],"")][matches[1]]:obj[firstExp];
-
-        var newObj = obj[parts[0]];
-        if (newObj === undefined) newObj = obj[parts[0]] = {};
-        if (!parts[1]) {
-            return newObj
-        }
-        parts.splice(0, 1);
-        var newString = parts.join('.');
-        return this.string_to_ref(newObj, newString);
-    }
 }
 

@@ -20,7 +20,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
     var initValues = { firstName: "Roman", lastName: "Samec", email: "email" };
     var changedValues = { firstName: "Roman changed", lastName: "Samec changed", email: "email changed" };
 
-    var execAndVerifyPersonProperties = function (bindings, initValues, changedValues) {
+    var execAndVerifyPersonProperties = function (bindings, initValues, changedValues, verifyPaths:boolean =true) {
 
         var root = bindings["root"];
         var firstName = bindings["firstName"];
@@ -32,10 +32,11 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
         });
 
         //verify pathes
-        expect1(firstName.path).to.equal("Person.FirstName");
-        expect1(lastName.path).to.equal("Person.LastName");
-        expect1(email.path).to.equal("Person.Contact.Email");
-
+        if (verifyPaths){
+            expect1(firstName.path.join(".")).to.equal("Person.FirstName");
+            expect1(lastName.path.join(".")).to.equal("Person.LastName");
+            expect1(email.path.join(".")).to.equal("Person.Contact.Email");
+        }
         //verify value getter
         expect1(firstName.value).to.equal(initValues.firstName);
         expect1(lastName.value).to.equal(initValues.lastName);
@@ -94,7 +95,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
         };
 
         //verify
-        expect1(person.path).to.equal("Person");
+        expect1(person.path.join(".")).to.equal("Person");
         execAndVerifyPersonProperties(nestedBindings, initValues, changedValues);
 
     });
@@ -789,7 +790,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
 
         //setup
         const TIME_STAMP = new Date();
-        
+
         var data = {
             Data: {
                 "Person": {
@@ -802,7 +803,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
             }
         };
 
-        
+
         var root = Binder.bindTo(data.Data);
         var person = Binder.bindTo(root, "Person");
         var firstName = Binder.bindTo(person, "FirstName");
@@ -830,7 +831,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
 
         //setup
         const TIME_STAMP = new Date();
-        
+
         var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
         var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
         var changedValues1: any = mapObject(changedValues, function (item) { return item + "1" });
@@ -888,7 +889,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
         expect1(lastName.parent).to.equal(person);
         expect1(firstName.parent).to.equal(person);
         expect1(person.parent).to.equal(personRow);
-        
+
         expect1(personRow.parent).to.equal(people);
         expect1(people.parent).to.equal(hobbieRow);
         expect1(hobbieRow.parent).to.equal(root);
@@ -899,15 +900,238 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
         expect1(email.root['customCode']).to.equal(TIME_STAMP);
 
     });
-}
+    it('pathes as arrays', function () {
 
-describe('DataBinding - Freezer provider', function () {
-    testSuite(FreezerBinder);
-});
+        var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
+        var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
+        var changedValues1: any = mapObject(changedValues, function (item) { return item + "1" });
+        var changedValues2: any = mapObject(changedValues, function (item) { return item + "2" });
+
+        //when
+        var data = {
+            Data: {
+                "Hobbies": [
+                    {
+                        "People": [
+                            {
+                                "Person": {
+                                    "FirstName": initValues1.firstName,
+                                    "LastName": initValues1.lastName,
+                                    "Contact": {
+                                        "Email": initValues1.email
+                                    }
+                                }
+                            },
+                            {
+                                "Person": {
+                                    "FirstName": initValues2.firstName,
+                                    "LastName": initValues2.lastName,
+                                    "Contact": {
+                                        "Email": initValues2.email
+                                    }
+                                }
+                            },
+
+                        ]
+                    }
+                ]
+            }
+        };
+        //exec
+        var root = Binder.bindTo(data,"Data");
+        var hobbiesPath = ["Hobbies",0,"People"];
+        // var root = Binder.bindArrayTo(data.Data, "Hobbies");
+        // var people = Binder.bindArrayTo(root.items[0], "People");
+
+        //first person
+        
+        var row = Binder.bindArrayTo(root, hobbiesPath).items[0];
+        var personPath = hobbiesPath.concat([0,'Person']);
+        var person = Binder.bindTo(root, personPath);
+        var firstName = Binder.bindTo(root,personPath.concat("FirstName"))
+        var lastName = Binder.bindTo(root, personPath.concat("LastName"));
+        var email = Binder.bindTo(root,personPath.concat("Contact","Email"))
+
+        var nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, initValues1, changedValues1,false);
+
+
+        //second person  
+        row = Binder.bindArrayTo(root, hobbiesPath).items[1];
+        personPath = hobbiesPath.concat([1,'Person']);
+        person = Binder.bindTo(root, personPath);
+        firstName = Binder.bindTo(root,personPath.concat("FirstName"))
+        lastName = Binder.bindTo(root, personPath.concat("LastName"));
+        email = Binder.bindTo(root,personPath.concat("Contact","Email"))
+
+
+        nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+        
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, initValues2, changedValues2,false);
+
+    });
+    it('pathes as strings', function () {
+
+        var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
+        var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
+        var changedValues1: any = mapObject(changedValues, function (item) { return item + "1" });
+        var changedValues2: any = mapObject(changedValues, function (item) { return item + "2" });
+
+        //when
+        var data = {
+            Data: {
+                "Hobbies": [
+                    {
+                        "People": [
+                            {
+                                "Person": {
+                                    "FirstName": initValues1.firstName,
+                                    "LastName": initValues1.lastName,
+                                    "Contact": {
+                                        "Email": initValues1.email
+                                    }
+                                }
+                            },
+                            {
+                                "Person": {
+                                    "FirstName": initValues2.firstName,
+                                    "LastName": initValues2.lastName,
+                                    "Contact": {
+                                        "Email": initValues2.email
+                                    }
+                                }
+                            },
+
+                        ]
+                    }
+                ]
+            }
+        };
+        //exec
+        var root = Binder.bindTo(data,"Data");
+        // var root = Binder.bindArrayTo(data.Data, "Hobbies");
+        // var people = Binder.bindArrayTo(root.items[0], "People");
+
+        //first person
+        var row = Binder.bindArrayTo(root, "Hobbies[0].People").items[0];
+        var person = Binder.bindTo(root, "Hobbies[0].People[0].Person");
+        var firstName = Binder.bindTo(root,"Hobbies[0].People[0].Person.FirstName")
+        var lastName = Binder.bindTo(root, "Hobbies[0].People[0].Person.LastName");
+        var email = Binder.bindTo(root,"Hobbies[0].People[0].Person.Contact.Email")
+
+        var nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, initValues1, changedValues1,false);
+
+
+        //second person        
+        row = Binder.bindArrayTo(root, "Hobbies[0].People").items[1];
+        person = Binder.bindTo(root, "Hobbies[0].People[1].Person");
+        firstName = Binder.bindTo(root,"Hobbies[0].People[1].Person.FirstName")
+        lastName = Binder.bindTo(root, "Hobbies[0].People[1].Person.LastName");
+        email = Binder.bindTo(root,"Hobbies[0].People[1].Person.Contact.Email")
+
+
+        nestedBindings = {
+            root: row,
+            firstName: firstName,
+            lastName: lastName,
+            email: email
+        };
+        
+        //verify
+        execAndVerifyPersonProperties(nestedBindings, initValues2, changedValues2,false);
+
+    });
+
+    it('binding - references', function () {
+
+        //setup
+        const TIME_STAMP = new Date();
+
+        var initValues1: any = mapObject(initValues, function (item) { return item + "1" });
+        var initValues2: any = mapObject(initValues, function (item) { return item + "2" });
+        var changedValues1: any = mapObject(changedValues, function (item) { return item + "1" });
+        var changedValues2: any = mapObject(changedValues, function (item) { return item + "2" });
+
+        //when
+        var data = {
+            Data: {
+                todosById: {
+                    "44": {
+                        name: "get milk from corner store",
+                        done: false,
+                        prerequisites: [{ $type: "ref", value: ["todosById", 54] }]
+                    },
+                    "54": {
+                        name: "withdraw money from ATM",
+                        done: false,
+                        prerequisites: []
+                    }
+                },
+                todos: [
+                    { $type: "ref", value: ["todosById", 44] },
+                    { $type: "ref", value: ["todosById", 54] }
+                ]
+            }
+        };
+
+        //exec
+        var root = Binder.bindArrayTo(data.Data, "todos");
+        var row = root.items[1];
+        var task = Binder.bindTo(row, "done");
+
+        var refTask1 = Binder.bindTo(data,"todos[0].prerequisites[0].done");
+        var refTask2 = Binder.bindTo(data,"todos[1].done");
+
+        //exec
+        task.value = false;
+
+        //verify parent
+         //expect1(root.parent).to.equal(undefined);
+        // expect1(email.parent).to.equal(person);
+        // expect1(lastName.parent).to.equal(person);
+        // expect1(firstName.parent).to.equal(person);
+        // expect1(person.parent).to.equal(personRow);
+
+        // expect1(personRow.parent).to.equal(people);
+        // expect1(people.parent).to.equal(hobbieRow);
+        // expect1(hobbieRow.parent).to.equal(root);
+
+
+
+        // //verify root
+        // expect1(email.root['customCode']).to.equal(TIME_STAMP);
+
+    });
+}
 describe('DataBinding - Plain object provider', function () {
     testSuite(SimpleBinder);
 });
 
+
+describe('DataBinding - Freezer provider', function () {
+    testSuite(FreezerBinder);
+});
 describe('DataBinding - Mobx provider', function () {
     testSuite(MobxBinder);
 });

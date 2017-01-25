@@ -1,14 +1,15 @@
+var castPath = require('lodash/_castPath');
 
 export interface BinderStatic {
-    bindToState?(data, key: string, path?: string, converter?: IValueConverter, converterParams?: any): ObjectBinding
-    bindTo(parent, path?: string, converter?: IValueConverter, converterParams?: any): ObjectBinding
-    bindArrayToState?(data, key: string, path?: string, converter?: IValueConverter, converterParams?: any): ArrayBinding
-    bindArrayTo(parent, path?: string, converter?: IValueConverter, converterParams?: any): ArrayBinding
+    bindToState?(data, key: string, path?: Path, converter?: IValueConverter, converterParams?: any): ObjectBinding
+    bindTo(parent, path?: Path, converter?: IValueConverter, converterParams?: any): ObjectBinding
+    bindArrayToState?(data, key: string, path?: Path, converter?: IValueConverter, converterParams?: any): ArrayBinding
+    bindArrayTo(parent, path?: Path, converter?: IValueConverter, converterParams?: any): ArrayBinding
 }
 export interface Binding {
-    path?: string;
+    path?: Array<string | number>;
     parent: Binding;
-    root:Binding;
+    root: Binding;
 }
 export interface ObjectBinding extends Binding {
     value: any;
@@ -19,6 +20,11 @@ export interface ArrayBinding extends Binding {
     remove(itemToRemove: any);
     splice(start: number, deleteCount: number, elementsToAdd?: any);
     move(x: number, y: number);
+}
+export type Path = string | Array<string | number>;
+
+export function isPathArray(path: Path): path is Array<string | number> {
+    return Array.isArray(path);
 }
 
 /**x`
@@ -32,11 +38,11 @@ export interface IPathObjectBinder {
     /**
      It gets value at the passed path expression.
      */
-    getValue(path?: string)
+    getValue(path?: Path)
     /**
      It sets the passed value at the passed path.
      */
-    setValue(path: string, value: any);
+    setValue(path: Path, value: any);
 
     subscribe(fce): void;
 }
@@ -74,19 +80,20 @@ export interface IPathObjectBinding extends ObjectBinding {
 export class PathObjectBinding implements IPathObjectBinding {
 
     public source: IPathObjectBinder;
-
-    constructor(public sourceObject: any, public provider: (data) => IPathObjectBinder, public path?: string, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter,public parentNode?:Binding) {
+    public path: Array<string | number>;
+    constructor(public sourceObject: any, public provider: (data) => IPathObjectBinder, rootPath?: Path, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter, public parentNode?: Binding) {
         this.source = provider(sourceObject);
+        this.path = rootPath === undefined ? [] : isPathArray(rootPath) ? rootPath : castPath(rootPath);
     }
 
     public get requestChange(): IRequestChange {
         return (value) => { this.value = value; }
     }
     public get root(): Binding {
-        return this.parentNode !==undefined?this.parentNode.root:this;
+        return this.parentNode !== undefined ? this.parentNode.root : this;
     }
     public get parent(): Binding {
-        return this.parentNode !==undefined?this.parentNode:undefined;
+        return this.parentNode !== undefined ? this.parentNode : undefined;
     }
 
     public get value() {
@@ -119,15 +126,16 @@ export class PathObjectBinding implements IPathObjectBinding {
 export class ArrayObjectBinding implements ArrayBinding {
 
     public source: IPathObjectBinder;
-
-    constructor(public sourceObject: any, public provider: (data) => IPathObjectBinder, public path?: string, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter) {
+    public path: Array<string | number>;
+    constructor(public sourceObject: any, public provider: (data) => IPathObjectBinder, rootPath?: Path, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter) {
         this.source = provider(sourceObject);
+        this.path = rootPath === undefined ? [] : isPathArray(rootPath) ? rootPath : castPath(rootPath);
     }
 
-    public get parent(): ArrayBinding{
+    public get parent(): ArrayBinding {
         return undefined;
     }
-    public get root(): ArrayBinding{
+    public get root(): ArrayBinding {
         return this;
     }
 
@@ -136,7 +144,7 @@ export class ArrayObjectBinding implements ArrayBinding {
 
         if (items === undefined) return [];
         return items.map(function (item) {
-            return new PathObjectBinding(item, this.provider, undefined, this.notifyChange,undefined,this);
+            return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
         }, this);
     }
 
@@ -160,6 +168,8 @@ export class ArrayObjectBinding implements ArrayBinding {
 
         if (this.notifyChange !== undefined) this.notifyChange();
     }
+
+
     public splice(start: number, deleteCount: number, elementsToAdd?: any) {
         var items = this.path === undefined ? this.source.getValue() : this.source.getValue(this.path);
         if (items === undefined) return;
@@ -182,9 +192,9 @@ export class ArrayObjectBinding implements ArrayBinding {
  It represents binding to array using relative path to parent object.
  */
 export class ArrayParentBinding implements ArrayBinding {
-
-    constructor(private parentBinding: IPathObjectBinding, public relativePath?: string, public valueConverter?: IValueConverter) {
-
+    public relativePath: Array<string | number>;
+    constructor(private parentBinding: IPathObjectBinding, subPath?: Path, public valueConverter?: IValueConverter) {
+        this.relativePath = subPath === undefined ? [] : isPathArray(subPath) ? subPath : castPath(subPath);
     }
 
     //wrapped properties - delegate call to parent
@@ -194,10 +204,10 @@ export class ArrayParentBinding implements ArrayBinding {
     public get provider(): (data) => IPathObjectBinder {
         return this.parentBinding.provider;
     }
-    public get root():Binding{
+    public get root(): Binding {
         return this.parentBinding.root;
     }
-    public get parent():Binding{
+    public get parent(): Binding {
         return this.parentBinding;
     }
 
@@ -210,10 +220,11 @@ export class ArrayParentBinding implements ArrayBinding {
     }
 
     //concatenate path
-    public get path(): string {
+    public get path(): Array<string | number> {
+
         if (this.parentBinding.path === undefined) return this.relativePath;
         if (this.relativePath === undefined) return this.parentBinding.path;
-        return [this.parentBinding.path, this.relativePath].join(".");
+        return this.parentBinding.path.concat(this.relativePath);
     }
     private getItems(): Array<any> {
         if (this.source === undefined) return;
@@ -226,7 +237,7 @@ export class ArrayParentBinding implements ArrayBinding {
         if (items === undefined) return [];
         return items.map(function (item) {
             //item._parentBinding = this;
-            return new PathObjectBinding(item, this.provider, undefined, this.notifyChange,undefined,this);
+            return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
         }, this);
     }
 
@@ -269,9 +280,9 @@ export class ArrayParentBinding implements ArrayBinding {
  */
 export class PathParentBinding implements IPathObjectBinding {
 
-    //converter:any;
-    constructor(private parentBinding: IPathObjectBinding, public relativePath, public valueConverter?: IValueConverter) {
-        //this.converter.format = Utils.partial(valueConverter,.partial()
+    public relativePath: Array<string | number>;
+    constructor(private parentBinding: IPathObjectBinding, subPath: Path, public valueConverter?: IValueConverter) {
+        this.relativePath = subPath === undefined ? [] : isPathArray(subPath) ? subPath : castPath(subPath);
     }
 
     //wrapped properties - delegate call to parent
@@ -281,10 +292,10 @@ export class PathParentBinding implements IPathObjectBinding {
     public get provider(): (data) => IPathObjectBinder {
         return this.parentBinding.provider;
     }
-    public get root():Binding{
+    public get root(): Binding {
         return this.parentBinding.root;
     }
-    public get parent():Binding{
+    public get parent(): Binding {
         return this.parentBinding;
     }
 
@@ -304,9 +315,9 @@ export class PathParentBinding implements IPathObjectBinding {
     }
 
     //concatenate path
-    public get path(): string {
+    public get path(): Array<string | number> {
         if (this.parentBinding.path === undefined) return this.relativePath;
-        return [this.parentBinding.path, this.relativePath].join(".");
+        return this.parentBinding.path.concat(this.relativePath);
     }
 
 
