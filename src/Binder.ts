@@ -6,13 +6,13 @@ export class BinderCore {
 
     static bindTo(type: { new (data): IPathObjectBinder }, parent, path?: string, converter?, converterParams?): IPathObjectBinding {
         var converter = converterParams !== undefined ? new CurryConverter(converter, converterParams) : converter;
-        return (parent instanceof PathObjectBinding || parent instanceof PathParentBinding) ? new PathParentBinding(parent, path, converter) : new PathObjectBinding(parent, (data) => new type(data), path, converter);
+        return (parent instanceof PathObjectBinding || parent instanceof PathParentBinding) ? new PathParentBinding(parent, path, converter) : new PathObjectBinding(new type(parent), path, converter);
     }
 
 
     static bindArrayTo(type: { new (data): IPathObjectBinder }, parent, path?: string, converter?, converterParams?): any {
         var converter = converterParams !== undefined ? new CurryConverter(converter, converterParams) : converter;
-        return (parent instanceof PathObjectBinding || parent instanceof PathParentBinding) ? new ArrayParentBinding(parent, path, converter) : new ArrayObjectBinding(parent, (data) => new type(data), path, converter);
+        return (parent instanceof PathObjectBinding || parent instanceof PathParentBinding) ? new ArrayParentBinding(parent, path, converter) : new ArrayObjectBinding(new type(parent), path, converter);
     }
 }
 /**
@@ -87,7 +87,6 @@ export default class Binder {
     static bindToState(component, key: string, path?: string, converter?: IValueConverter, converterParams?): IPathObjectBinding {
         return new PathObjectBinding(
             component["state"][key],
-            (data) => new Provider(data),
             path,
             Binder.createStateKeySetter(component, key),
             converterParams !== undefined ? new CurryConverter(converter, converterParams) : converter
@@ -155,7 +154,6 @@ export default class Binder {
     static bindArrayToState(component, key: string, path?: string): ArrayObjectBinding {
         return new ArrayObjectBinding(
             component["state"][key],
-            (data) => new Provider(data),
             path,
             Binder.createStateKeySetter(component, key)
             //ReactStateSetters.createStateKeySetter(this, key)

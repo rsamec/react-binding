@@ -46,22 +46,12 @@ describe('DataBinding - Mobx reactions', function () {
             //console.log(state, previous)
         });
 
-        // reaction("FullName",
-        // () => {return firstName.value + ' ' +  lastName.value},
-        // (fullName) => {console.log(fullName)});
-        //var val = firstName.value;
-        // console.log("und: "  + val);
-        // reaction("First value",
-        // () => {
-        //     return firstName.value
-        // },
-        // (val) => {console.log(val)},true);
 
         reaction("Person converter",
-            () => {
-                return fullName.value
-            },
-            (val) => { console.log(val) }, true);
+            () => { return fullName.value },
+            (val) => {
+                //console.log(val)
+            }, true);
 
         //verify pathes
         expect1(firstName.path.join(".")).to.equal("Person.FirstName");
@@ -306,7 +296,7 @@ describe('Freezer props test', function () {
                     (val) => {
                         get(freezer.get(), currentCursor).set(prop, val);
                         //props.set(prop, val);
-                        console.log(currentCursor.join(','))
+                        //console.log(currentCursor.join(','))
                     }, false);
             }
         }
@@ -316,12 +306,12 @@ describe('Freezer props test', function () {
             // currentState will have the new state for your app
             // prevState contains the old state, in case you need
             // to do some comparisons
-            console.log('I was updated');
+            //console.log('I was updated');
             //console.log(currentState);
 
             //var newState = freezer.get();
             var newState = currentState;
-            console.log(JSON.stringify(newState));
+            //console.log(JSON.stringify(newState));
 
             //expect1(newState.boxes[2].props.content).to.equal("Smith");
             //expect1(newState.boxes[3].props.content).to.equal("RomanSmith");

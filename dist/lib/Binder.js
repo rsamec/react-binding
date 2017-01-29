@@ -5,11 +5,11 @@ var BinderCore = (function () {
     }
     BinderCore.bindTo = function (type, parent, path, converter, converterParams) {
         var converter = converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter;
-        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.PathParentBinding(parent, path, converter) : new DataBinding_1.PathObjectBinding(parent, function (data) { return new type(data); }, path, converter);
+        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.PathParentBinding(parent, path, converter) : new DataBinding_1.PathObjectBinding(new type(parent), path, converter);
     };
     BinderCore.bindArrayTo = function (type, parent, path, converter, converterParams) {
         var converter = converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter;
-        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.ArrayParentBinding(parent, path, converter) : new DataBinding_1.ArrayObjectBinding(parent, function (data) { return new type(data); }, path, converter);
+        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.ArrayParentBinding(parent, path, converter) : new DataBinding_1.ArrayObjectBinding(new type(parent), path, converter);
     };
     return BinderCore;
 })();
@@ -83,7 +83,7 @@ var Binder = (function () {
      * @returns {DataBinding.PathObjectBinding}
      */
     Binder.bindToState = function (component, key, path, converter, converterParams) {
-        return new DataBinding_1.PathObjectBinding(component["state"][key], function (data) { return new PlainObjectProvider_1.default(data); }, path, Binder.createStateKeySetter(component, key), converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter);
+        return new DataBinding_1.PathObjectBinding(component["state"][key], path, Binder.createStateKeySetter(component, key), converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter);
     };
     /**
      * It enables to bind to complex object with nested properties and reuse bindings in components.
@@ -142,7 +142,7 @@ var Binder = (function () {
      * @returns {DataBinding.ArrayObjectBinding}
      */
     Binder.bindArrayToState = function (component, key, path) {
-        return new DataBinding_1.ArrayObjectBinding(component["state"][key], function (data) { return new PlainObjectProvider_1.default(data); }, path, Binder.createStateKeySetter(component, key));
+        return new DataBinding_1.ArrayObjectBinding(component["state"][key], path, Binder.createStateKeySetter(component, key));
     };
     /**
      * It enables binding to collection-based structures (array) for nested arrays. It enables to add and remove items.

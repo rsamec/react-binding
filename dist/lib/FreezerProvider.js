@@ -1,54 +1,85 @@
 var Freezer = require('freezer-js');
+var utils_1 = require('./utils');
+var utils_lodash_1 = require('./utils-lodash');
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
 var FreezerPathObjectBinder = (function () {
-    function FreezerPathObjectBinder(source) {
+    function FreezerPathObjectBinder(rootParams, source) {
         this.source = source;
-        this.freezer = new Freezer(source);
+        this.root = source === undefined ? new Freezer(rootParams) : rootParams;
+        this.source = source === undefined ? this.root : source;
     }
+    FreezerPathObjectBinder.prototype.createNew = function (path, newItem) {
+        var item = utils_1.followRef(this.root.get(), newItem || this.getValue(path));
+        return new FreezerPathObjectBinder(this.source, new Freezer(item));
+    };
     FreezerPathObjectBinder.prototype.subscribe = function (updateFce) {
-        this.freezer.on('update', function (state, prevState) {
+        this.source.on('update', function (state, prevState) {
             if (updateFce !== undefined)
                 updateFce(state, prevState);
         });
     };
     FreezerPathObjectBinder.prototype.getValue = function (path) {
         if (path === undefined)
-            return this.freezer.get();
-        var parent = this.getParent(path);
+            return this.source.get();
+        var cursorPath = utils_1.castPath(path);
+        if (cursorPath.length === 0)
+            return this.source.get();
+        ;
+        var parent = this.getParent(cursorPath);
         if (parent === undefined)
             return;
-        var property = FreezerPathObjectBinder.getProperty(path);
+        var property = cursorPath[cursorPath.length - 1];
         return parent[property];
     };
     FreezerPathObjectBinder.prototype.setValue = function (path, value) {
-        var parent = this.getParent(path);
+        if (path === undefined)
+            return;
+        var cursorPath = utils_1.castPath(path);
+        if (cursorPath.length === 0)
+            return;
+        var parent = this.getParent(cursorPath);
         if (parent === undefined)
             return;
-        var property = FreezerPathObjectBinder.getProperty(path);
-        parent.set(property, value);
+        var property = cursorPath[cursorPath.length - 1];
+        var updated = parent.set(property, value);
+        return updated;
     };
-    FreezerPathObjectBinder.prototype.getParent = function (path) {
-        var state = this.freezer.get();
-        var last = path.lastIndexOf(".");
-        return last != -1 ? this.string_to_ref(state, path.substring(0, last)) : state;
+    FreezerPathObjectBinder.prototype.getParent = function (cursorPath) {
+        if (cursorPath.length == 0)
+            return;
+        var source = this.source.get();
+        if (cursorPath.length == 1)
+            return utils_1.followRef(this.root.get(), source);
+        var parentPath = cursorPath.slice(0, cursorPath.length - 1);
+        var parent = utils_1.baseGet(source, parentPath);
+        if (parent !== undefined)
+            return utils_1.followRef(this.root.get(), parent);
+        var updated = this.setWith(source, parentPath, {});
+        return utils_1.baseGet(updated, parentPath);
     };
-    FreezerPathObjectBinder.getProperty = function (path) {
-        var last = path.lastIndexOf(".");
-        return last != -1 ? path.substring(last + 1, path.length) : path;
-    };
-    FreezerPathObjectBinder.prototype.string_to_ref = function (obj, s) {
-        var parts = s.split('.');
-        var newObj = obj[parts[0]];
-        if (newObj === undefined)
-            newObj = obj.set(parts[0], {});
-        if (!parts[1]) {
-            return newObj;
+    FreezerPathObjectBinder.prototype.setWith = function (object, path, value) {
+        var length = path.length;
+        var lastIndex = length - 1;
+        var index = -1;
+        var nested = object;
+        while (nested != null && ++index < length) {
+            var key = path[index];
+            var newValue = value;
+            if (index != lastIndex) {
+                var objValue = nested[key];
+                if (newValue === undefined) {
+                    newValue = utils_lodash_1.isObject(objValue)
+                        ? objValue
+                        : (utils_lodash_1.isIndex(path[index + 1]) ? [] : {});
+                }
+            }
+            //assignValue(nested, key, newValue);
+            var updated = nested.set(key, newValue);
+            nested = updated[key];
         }
-        parts.splice(0, 1);
-        var newString = parts.join('.');
-        return this.string_to_ref(newObj, newString);
+        return nested;
     };
     return FreezerPathObjectBinder;
 })();

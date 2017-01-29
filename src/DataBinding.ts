@@ -1,4 +1,4 @@
-var castPath = require('lodash/_castPath');
+import { castPath } from "./utils";
 
 export interface BinderStatic {
     bindToState?(data, key: string, path?: Path, converter?: IValueConverter, converterParams?: any): ObjectBinding
@@ -23,11 +23,8 @@ export interface ArrayBinding extends Binding {
 }
 export type Path = string | Array<string | number>;
 
-export function isPathArray(path: Path): path is Array<string | number> {
-    return Array.isArray(path);
-}
 
-/**x`
+/**
  * Two-way data binding for React.
  */
 
@@ -66,7 +63,6 @@ export interface IRequestChange {
 export interface IPathObjectBinding extends ObjectBinding {
     //value: any;
     source: IPathObjectBinder;
-    provider: (data) => IPathObjectBinder;
 
     notifyChange?: INotifyChange;
     requestChange?: IRequestChange;
@@ -79,11 +75,10 @@ export interface IPathObjectBinding extends ObjectBinding {
  */
 export class PathObjectBinding implements IPathObjectBinding {
 
-    public source: IPathObjectBinder;
+    //public source: IPathObjectBinder;
     public path: Array<string | number>;
-    constructor(public sourceObject: any, public provider: (data) => IPathObjectBinder, rootPath?: Path, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter, public parentNode?: Binding) {
-        this.source = provider(sourceObject);
-        this.path = rootPath === undefined ? [] : isPathArray(rootPath) ? rootPath : castPath(rootPath);
+    constructor(public source: IPathObjectBinder, rootPath?: Path, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter, public parentNode?: Binding) {
+        this.path = rootPath === undefined ? [] : castPath(rootPath);
     }
 
     public get requestChange(): IRequestChange {
@@ -125,11 +120,9 @@ export class PathObjectBinding implements IPathObjectBinding {
 
 export class ArrayObjectBinding implements ArrayBinding {
 
-    public source: IPathObjectBinder;
     public path: Array<string | number>;
-    constructor(public sourceObject: any, public provider: (data) => IPathObjectBinder, rootPath?: Path, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter) {
-        this.source = provider(sourceObject);
-        this.path = rootPath === undefined ? [] : isPathArray(rootPath) ? rootPath : castPath(rootPath);
+    constructor(public source: IPathObjectBinder, rootPath?: Path, public notifyChange?: INotifyChange, public valueConverter?: IValueConverter) {
+        this.path = rootPath === undefined ? [] : castPath(rootPath);
     }
 
     public get parent(): ArrayBinding {
@@ -143,8 +136,8 @@ export class ArrayObjectBinding implements ArrayBinding {
         var items = this.path === undefined ? this.source.getValue() : this.source.getValue(this.path);
 
         if (items === undefined) return [];
-        return items.map(function (item) {
-            return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
+        return items.map(function (item, index) {
+            return new PathObjectBinding(this.source.createNew(this.path.concat(index)), undefined, this.notifyChange, undefined, this);
         }, this);
     }
 
@@ -194,15 +187,12 @@ export class ArrayObjectBinding implements ArrayBinding {
 export class ArrayParentBinding implements ArrayBinding {
     public relativePath: Array<string | number>;
     constructor(private parentBinding: IPathObjectBinding, subPath?: Path, public valueConverter?: IValueConverter) {
-        this.relativePath = subPath === undefined ? [] : isPathArray(subPath) ? subPath : castPath(subPath);
+        this.relativePath = subPath === undefined ? [] : castPath(subPath);
     }
 
     //wrapped properties - delegate call to parent
     public get source(): IPathObjectBinder {
         return this.parentBinding.source;
-    }
-    public get provider(): (data) => IPathObjectBinder {
-        return this.parentBinding.provider;
     }
     public get root(): Binding {
         return this.parentBinding.root;
@@ -235,9 +225,9 @@ export class ArrayParentBinding implements ArrayBinding {
         var items = this.getItems();
 
         if (items === undefined) return [];
-        return items.map(function (item) {
-            //item._parentBinding = this;
-            return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
+        return items.map(function (item, index) {
+            //item._parentBinding = this;            
+            return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
         }, this);
     }
 
@@ -282,16 +272,14 @@ export class PathParentBinding implements IPathObjectBinding {
 
     public relativePath: Array<string | number>;
     constructor(private parentBinding: IPathObjectBinding, subPath: Path, public valueConverter?: IValueConverter) {
-        this.relativePath = subPath === undefined ? [] : isPathArray(subPath) ? subPath : castPath(subPath);
+        this.relativePath = subPath === undefined ? [] : castPath(subPath);
     }
 
     //wrapped properties - delegate call to parent
     public get source(): IPathObjectBinder {
         return this.parentBinding.source;
     }
-    public get provider(): (data) => IPathObjectBinder {
-        return this.parentBinding.provider;
-    }
+
     public get root(): Binding {
         return this.parentBinding.root;
     }

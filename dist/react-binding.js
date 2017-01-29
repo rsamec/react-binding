@@ -2200,11 +2200,11 @@ var BinderCore = (function () {
     }
     BinderCore.bindTo = function (type, parent, path, converter, converterParams) {
         var converter = converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter;
-        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.PathParentBinding(parent, path, converter) : new DataBinding_1.PathObjectBinding(parent, function (data) { return new type(data); }, path, converter);
+        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.PathParentBinding(parent, path, converter) : new DataBinding_1.PathObjectBinding(new type(parent), path, converter);
     };
     BinderCore.bindArrayTo = function (type, parent, path, converter, converterParams) {
         var converter = converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter;
-        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.ArrayParentBinding(parent, path, converter) : new DataBinding_1.ArrayObjectBinding(parent, function (data) { return new type(data); }, path, converter);
+        return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.ArrayParentBinding(parent, path, converter) : new DataBinding_1.ArrayObjectBinding(new type(parent), path, converter);
     };
     return BinderCore;
 }());
@@ -2278,7 +2278,7 @@ var Binder = (function () {
      * @returns {DataBinding.PathObjectBinding}
      */
     Binder.bindToState = function (component, key, path, converter, converterParams) {
-        return new DataBinding_1.PathObjectBinding(component["state"][key], function (data) { return new PlainObjectProvider_1.default(data); }, path, Binder.createStateKeySetter(component, key), converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter);
+        return new DataBinding_1.PathObjectBinding(component["state"][key], path, Binder.createStateKeySetter(component, key), converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter);
     };
     /**
      * It enables to bind to complex object with nested properties and reuse bindings in components.
@@ -2337,7 +2337,7 @@ var Binder = (function () {
      * @returns {DataBinding.ArrayObjectBinding}
      */
     Binder.bindArrayToState = function (component, key, path) {
-        return new DataBinding_1.ArrayObjectBinding(component["state"][key], function (data) { return new PlainObjectProvider_1.default(data); }, path, Binder.createStateKeySetter(component, key));
+        return new DataBinding_1.ArrayObjectBinding(component["state"][key], path, Binder.createStateKeySetter(component, key));
     };
     /**
      * It enables binding to collection-based structures (array) for nested arrays. It enables to add and remove items.
@@ -2365,18 +2365,17 @@ exports.default = Binder;
 },{"./DataBinding":7,"./PlainObjectProvider":8,"_process":5,"buffer":2}],7:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 "use strict";
+var utils_1 = require("./utils");
 /**
  It represents binding to property at source object at a given path.
  */
 var PathObjectBinding = (function () {
-    function PathObjectBinding(sourceObject, provider, path, notifyChange, valueConverter, parentNode) {
-        this.sourceObject = sourceObject;
-        this.provider = provider;
-        this.path = path;
+    function PathObjectBinding(source, rootPath, notifyChange, valueConverter, parentNode) {
+        this.source = source;
         this.notifyChange = notifyChange;
         this.valueConverter = valueConverter;
         this.parentNode = parentNode;
-        this.source = provider(sourceObject);
+        this.path = rootPath === undefined ? [] : utils_1.castPath(rootPath);
     }
     Object.defineProperty(PathObjectBinding.prototype, "requestChange", {
         get: function () {
@@ -2432,13 +2431,11 @@ exports.PathObjectBinding = PathObjectBinding;
  It represents binding to property at source object at a given path.
  */
 var ArrayObjectBinding = (function () {
-    function ArrayObjectBinding(sourceObject, provider, path, notifyChange, valueConverter) {
-        this.sourceObject = sourceObject;
-        this.provider = provider;
-        this.path = path;
+    function ArrayObjectBinding(source, rootPath, notifyChange, valueConverter) {
+        this.source = source;
         this.notifyChange = notifyChange;
         this.valueConverter = valueConverter;
-        this.source = provider(sourceObject);
+        this.path = rootPath === undefined ? [] : utils_1.castPath(rootPath);
     }
     Object.defineProperty(ArrayObjectBinding.prototype, "parent", {
         get: function () {
@@ -2459,8 +2456,8 @@ var ArrayObjectBinding = (function () {
             var items = this.path === undefined ? this.source.getValue() : this.source.getValue(this.path);
             if (items === undefined)
                 return [];
-            return items.map(function (item) {
-                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
+            return items.map(function (item, index) {
+                return new PathObjectBinding(this.source.createNew(this.path.concat(index)), undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -2512,22 +2509,15 @@ exports.ArrayObjectBinding = ArrayObjectBinding;
  It represents binding to array using relative path to parent object.
  */
 var ArrayParentBinding = (function () {
-    function ArrayParentBinding(parentBinding, relativePath, valueConverter) {
+    function ArrayParentBinding(parentBinding, subPath, valueConverter) {
         this.parentBinding = parentBinding;
-        this.relativePath = relativePath;
         this.valueConverter = valueConverter;
+        this.relativePath = subPath === undefined ? [] : utils_1.castPath(subPath);
     }
     Object.defineProperty(ArrayParentBinding.prototype, "source", {
         //wrapped properties - delegate call to parent
         get: function () {
             return this.parentBinding.source;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ArrayParentBinding.prototype, "provider", {
-        get: function () {
-            return this.parentBinding.provider;
         },
         enumerable: true,
         configurable: true
@@ -2563,7 +2553,7 @@ var ArrayParentBinding = (function () {
                 return this.relativePath;
             if (this.relativePath === undefined)
                 return this.parentBinding.path;
-            return [this.parentBinding.path, this.relativePath].join(".");
+            return this.parentBinding.path.concat(this.relativePath);
         },
         enumerable: true,
         configurable: true
@@ -2579,9 +2569,9 @@ var ArrayParentBinding = (function () {
             var items = this.getItems();
             if (items === undefined)
                 return [];
-            return items.map(function (item) {
-                //item._parentBinding = this;
-                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
+            return items.map(function (item, index) {
+                //item._parentBinding = this;            
+                return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -2629,24 +2619,15 @@ exports.ArrayParentBinding = ArrayParentBinding;
  It represents binding to relative path for parent object.
  */
 var PathParentBinding = (function () {
-    //converter:any;
-    function PathParentBinding(parentBinding, relativePath, valueConverter) {
+    function PathParentBinding(parentBinding, subPath, valueConverter) {
         this.parentBinding = parentBinding;
-        this.relativePath = relativePath;
         this.valueConverter = valueConverter;
-        //this.converter.format = Utils.partial(valueConverter,.partial()
+        this.relativePath = subPath === undefined ? [] : utils_1.castPath(subPath);
     }
     Object.defineProperty(PathParentBinding.prototype, "source", {
         //wrapped properties - delegate call to parent
         get: function () {
             return this.parentBinding.source;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(PathParentBinding.prototype, "provider", {
-        get: function () {
-            return this.parentBinding.provider;
         },
         enumerable: true,
         configurable: true
@@ -2690,7 +2671,7 @@ var PathParentBinding = (function () {
         get: function () {
             if (this.parentBinding.path === undefined)
                 return this.relativePath;
-            return [this.parentBinding.path, this.relativePath].join(".");
+            return this.parentBinding.path.concat(this.relativePath);
         },
         enumerable: true,
         configurable: true
@@ -2739,74 +2720,65 @@ var CurryConverter = (function () {
 exports.CurryConverter = CurryConverter;
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/src\\DataBinding.ts","/src")
-},{"_process":5,"buffer":2}],8:[function(require,module,exports){
+},{"./utils":10,"_process":5,"buffer":2}],8:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 "use strict";
+var utils_1 = require("./utils");
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
 var PathObjectBinder = (function () {
-    function PathObjectBinder(source) {
-        this.source = source;
+    function PathObjectBinder(root, source) {
+        this.root = root;
+        this.source = source === undefined ? this.root : source;
     }
     PathObjectBinder.prototype.subscribe = function (updateFce) {
         // this.freezer.on('update',function(state,prevState){
         //     if (updateFce!==undefined) updateFce(state,prevState)}
         // );
     };
+    PathObjectBinder.prototype.createNew = function (path, newItem) {
+        var item = utils_1.followRef(this.root, newItem || this.getValue(path));
+        //console.log(item);
+        return new PathObjectBinder(this.root, item);
+    };
     PathObjectBinder.prototype.getValue = function (path) {
-        var parent = this.getParent(path);
+        if (path === undefined)
+            return this.source;
+        var cursorPath = utils_1.castPath(path);
+        if (cursorPath.length === 0)
+            return this.source;
+        var parent = this.getParent(cursorPath);
         if (parent === undefined)
             return;
-        if (path === undefined)
-            return parent;
-        var property = PathObjectBinder.getProperty(path);
+        var property = cursorPath[cursorPath.length - 1];
         return parent[property];
     };
     PathObjectBinder.prototype.setValue = function (path, value) {
-        var parent = this.getParent(path);
+        if (path === undefined)
+            return;
+        var cursorPath = utils_1.castPath(path);
+        if (cursorPath.length === 0)
+            return;
+        var parent = this.getParent(cursorPath);
         if (parent === undefined)
             return;
-        var property = PathObjectBinder.getProperty(path);
+        var property = cursorPath[cursorPath.length - 1];
+        //console.log(parent);
         parent[property] = value;
+        //console.log(parent);
     };
-    PathObjectBinder.prototype.getParent = function (path) {
-        if (path === undefined)
-            return this.source;
-        var last = path.lastIndexOf(".");
-        return last != -1 ? this.string_to_ref(this.source, path.substring(0, last)) : this.source;
-    };
-    PathObjectBinder.getProperty = function (path) {
-        var last = path.lastIndexOf(".");
-        return last != -1 ? path.substring(last + 1, path.length) : path;
-    };
-    PathObjectBinder.prototype.string_to_ref = function (obj, s) {
-        var parts = s.split('.');
-        //experimental - support for square brackets
-        //var arrayExp = /\[(\d*)\]/;
-        //var firstExp = parts[0];
-        //var matches = arrayExp.exec(firstExp);
-        //var newObj;
-        //if (!!matches){
-        //    firstExp =  firstExp.replace(matches[0],"");
-        //    var newArray = obj[firstExp][matche];
-        //    if (newArray === undefined) newArray = [];
-        //    newObj = newArray[matches[1]];
-        //}
-        //else{
-        //    newObj = obj[firstExp];
-        //    if (newObj === undefined) newObj = obj[firstExp] = {};
-        //}
-        //var newObj = !!matches? obj[firstExp.replace(matches[0],"")][matches[1]]:obj[firstExp];
-        var newObj = obj[parts[0]];
-        if (newObj === undefined)
-            newObj = obj[parts[0]] = {};
-        if (!parts[1]) {
-            return newObj;
-        }
-        parts.splice(0, 1);
-        var newString = parts.join('.');
-        return this.string_to_ref(newObj, newString);
+    PathObjectBinder.prototype.getParent = function (cursorPath) {
+        if (cursorPath.length == 0)
+            return;
+        if (cursorPath.length == 1)
+            return utils_1.followRef(this.root, this.source);
+        var parentPath = cursorPath.slice(0, cursorPath.length - 1);
+        var parent = utils_1.baseGet(this.source, parentPath);
+        if (parent !== undefined)
+            return utils_1.followRef(this.root, parent);
+        utils_1.baseSet(this.source, parentPath, {}, Object);
+        return utils_1.baseGet(this.source, parentPath);
     };
     return PathObjectBinder;
 }());
@@ -2814,5 +2786,136 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PathObjectBinder;
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/src\\PlainObjectProvider.ts","/src")
-},{"_process":5,"buffer":2}]},{},[6])(6)
+},{"./utils":10,"_process":5,"buffer":2}],9:[function(require,module,exports){
+(function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
+// Copyright JS Foundation and other contributors <https://js.foundation/>
+"use strict";
+// Based on Underscore.js, copyright Jeremy Ashkenas,
+// DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+// This software consists of voluntary contributions made by many
+// individuals. For exact contribution history, see the revision history
+// available at https://github.com/lodash/lodash
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+/** Used to detect unsigned integer values. */
+var reIsUint = /^(?:0|[1-9]\d*)$/;
+function isIndex(value, length) {
+    length = length == null ? MAX_SAFE_INTEGER : length;
+    return !!length &&
+        (typeof value == 'number' || reIsUint.test(value)) &&
+        (value > -1 && value % 1 == 0 && value < length);
+}
+exports.isIndex = isIndex;
+function isObject(value) {
+    var type = typeof value;
+    return value != null && (type == 'object' || type == 'function');
+}
+exports.isObject = isObject;
+/** Used to match property names within property paths. */
+var reLeadingDot = /^\./;
+var rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+function stringToPath(string) {
+    var result = [];
+    if (reLeadingDot.test(string)) {
+        result.push('');
+    }
+    string.replace(rePropName, function (match, number, quote, string) {
+        result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+    });
+    return result;
+}
+exports.stringToPath = stringToPath;
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/;
+var reIsPlainProp = /^\w*$/;
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+    if (Array.isArray(value)) {
+        return false;
+    }
+    var type = typeof value;
+    if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+        value == null || typeof value == 'symbol') {
+        return true;
+    }
+    return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+        (object != null && value in Object(object));
+}
+exports.isKey = isKey;
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/src\\utils-lodash.ts","/src")
+},{"_process":5,"buffer":2}],10:[function(require,module,exports){
+(function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
+"use strict";
+var utils_lodash_1 = require("./utils-lodash");
+var $ref = "ref";
+function castPath(value, object) {
+    if (Array.isArray(value)) {
+        return value;
+    }
+    return utils_lodash_1.isKey(value, object) ? [value] : utils_lodash_1.stringToPath(value == null ? '' : value.toString());
+}
+exports.castPath = castPath;
+function followRef(root, ref) {
+    if (ref === undefined)
+        return ref;
+    return ref.$type === $ref ? baseGet(root, ref.value) : ref;
+}
+exports.followRef = followRef;
+function baseGet(root, path) {
+    var index = 0;
+    var length = path.length;
+    var object = root;
+    while (object != null && index < length) {
+        object = followRef(root, object);
+        object = object[path[index++]];
+    }
+    return (index && index == length) ? object : undefined;
+}
+exports.baseGet = baseGet;
+function baseSet(object, path, value, customizer) {
+    if (!utils_lodash_1.isObject(object)) {
+        return object;
+    }
+    var length = path.length;
+    var lastIndex = length - 1;
+    var index = -1;
+    var nested = object;
+    while (nested != null && ++index < length) {
+        var key = path[index];
+        var newValue = value;
+        if (index != lastIndex) {
+            var objValue = nested[key];
+            newValue = customizer ? customizer(objValue, key, nested) : undefined;
+            if (newValue === undefined) {
+                newValue = utils_lodash_1.isObject(objValue)
+                    ? objValue
+                    : (utils_lodash_1.isIndex(path[index + 1]) ? [] : {});
+            }
+        }
+        nested[key] = newValue;
+        nested = nested[key];
+    }
+    return nested;
+}
+exports.baseSet = baseSet;
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/src\\utils.ts","/src")
+},{"./utils-lodash":9,"_process":5,"buffer":2}]},{},[6])(6)
 });

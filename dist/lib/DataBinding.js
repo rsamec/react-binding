@@ -1,15 +1,14 @@
+var utils_1 = require("./utils");
 /**
  It represents binding to property at source object at a given path.
  */
 var PathObjectBinding = (function () {
-    function PathObjectBinding(sourceObject, provider, path, notifyChange, valueConverter, parentNode) {
-        this.sourceObject = sourceObject;
-        this.provider = provider;
-        this.path = path;
+    function PathObjectBinding(source, rootPath, notifyChange, valueConverter, parentNode) {
+        this.source = source;
         this.notifyChange = notifyChange;
         this.valueConverter = valueConverter;
         this.parentNode = parentNode;
-        this.source = provider(sourceObject);
+        this.path = rootPath === undefined ? [] : utils_1.castPath(rootPath);
     }
     Object.defineProperty(PathObjectBinding.prototype, "requestChange", {
         get: function () {
@@ -65,13 +64,11 @@ exports.PathObjectBinding = PathObjectBinding;
  It represents binding to property at source object at a given path.
  */
 var ArrayObjectBinding = (function () {
-    function ArrayObjectBinding(sourceObject, provider, path, notifyChange, valueConverter) {
-        this.sourceObject = sourceObject;
-        this.provider = provider;
-        this.path = path;
+    function ArrayObjectBinding(source, rootPath, notifyChange, valueConverter) {
+        this.source = source;
         this.notifyChange = notifyChange;
         this.valueConverter = valueConverter;
-        this.source = provider(sourceObject);
+        this.path = rootPath === undefined ? [] : utils_1.castPath(rootPath);
     }
     Object.defineProperty(ArrayObjectBinding.prototype, "parent", {
         get: function () {
@@ -92,8 +89,8 @@ var ArrayObjectBinding = (function () {
             var items = this.path === undefined ? this.source.getValue() : this.source.getValue(this.path);
             if (items === undefined)
                 return [];
-            return items.map(function (item) {
-                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
+            return items.map(function (item, index) {
+                return new PathObjectBinding(this.source.createNew(this.path.concat(index)), undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -145,22 +142,15 @@ exports.ArrayObjectBinding = ArrayObjectBinding;
  It represents binding to array using relative path to parent object.
  */
 var ArrayParentBinding = (function () {
-    function ArrayParentBinding(parentBinding, relativePath, valueConverter) {
+    function ArrayParentBinding(parentBinding, subPath, valueConverter) {
         this.parentBinding = parentBinding;
-        this.relativePath = relativePath;
         this.valueConverter = valueConverter;
+        this.relativePath = subPath === undefined ? [] : utils_1.castPath(subPath);
     }
     Object.defineProperty(ArrayParentBinding.prototype, "source", {
         //wrapped properties - delegate call to parent
         get: function () {
             return this.parentBinding.source;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ArrayParentBinding.prototype, "provider", {
-        get: function () {
-            return this.parentBinding.provider;
         },
         enumerable: true,
         configurable: true
@@ -196,7 +186,7 @@ var ArrayParentBinding = (function () {
                 return this.relativePath;
             if (this.relativePath === undefined)
                 return this.parentBinding.path;
-            return [this.parentBinding.path, this.relativePath].join(".");
+            return this.parentBinding.path.concat(this.relativePath);
         },
         enumerable: true,
         configurable: true
@@ -212,9 +202,9 @@ var ArrayParentBinding = (function () {
             var items = this.getItems();
             if (items === undefined)
                 return [];
-            return items.map(function (item) {
-                //item._parentBinding = this;
-                return new PathObjectBinding(item, this.provider, undefined, this.notifyChange, undefined, this);
+            return items.map(function (item, index) {
+                //item._parentBinding = this;            
+                return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -262,24 +252,15 @@ exports.ArrayParentBinding = ArrayParentBinding;
  It represents binding to relative path for parent object.
  */
 var PathParentBinding = (function () {
-    //converter:any;
-    function PathParentBinding(parentBinding, relativePath, valueConverter) {
+    function PathParentBinding(parentBinding, subPath, valueConverter) {
         this.parentBinding = parentBinding;
-        this.relativePath = relativePath;
         this.valueConverter = valueConverter;
-        //this.converter.format = Utils.partial(valueConverter,.partial()
+        this.relativePath = subPath === undefined ? [] : utils_1.castPath(subPath);
     }
     Object.defineProperty(PathParentBinding.prototype, "source", {
         //wrapped properties - delegate call to parent
         get: function () {
             return this.parentBinding.source;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(PathParentBinding.prototype, "provider", {
-        get: function () {
-            return this.parentBinding.provider;
         },
         enumerable: true,
         configurable: true
@@ -323,7 +304,7 @@ var PathParentBinding = (function () {
         get: function () {
             if (this.parentBinding.path === undefined)
                 return this.relativePath;
-            return [this.parentBinding.path, this.relativePath].join(".");
+            return this.parentBinding.path.concat(this.relativePath);
         },
         enumerable: true,
         configurable: true

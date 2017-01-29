@@ -1,31 +1,36 @@
 var Freezer = require('freezer-js');
-import { isArray,get, isObject, isIndex } from 'lodash';
-var castPath = require('lodash/_castPath');
-import { IPathObjectBinder, Path, isPathArray } from './DataBinding';
+
+import { baseSet as set, baseGet as get, castPath, followRef } from './utils';
+import { isIndex, isObject } from './utils-lodash';
+import { IPathObjectBinder, Path } from './DataBinding';
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
 export default class FreezerPathObjectBinder implements IPathObjectBinder {
 
-    private freezer;
-    constructor(private source: any) {
-        
-        this.freezer = new Freezer(source);
+    private root;
+    constructor(rootParams: any, private source?: any) {
+        this.root = source === undefined ? new Freezer(rootParams) : rootParams;
+        this.source = source === undefined ? this.root : source;
+
+    }
+    public createNew(path: Path, newItem?: any): IPathObjectBinder {
+        var item = followRef(this.root.get(), newItem || this.getValue(path));
+        return new FreezerPathObjectBinder(this.source, new Freezer(item))
     }
     public subscribe(updateFce) {
-        this.freezer.on('update', function (state, prevState) {
+        this.source.on('update', function (state, prevState) {
             if (updateFce !== undefined) updateFce(state, prevState)
         }
         );
     }
 
     public getValue(path?: Path) {
-        if (path === undefined) return this.freezer.get();
-        var cursorPath = !isPathArray(path) ? castPath(path) : path;
-        if (cursorPath.length === 0) return this.freezer.get();;
+        if (path === undefined) return this.source.get();
+        var cursorPath = castPath(path);
+        if (cursorPath.length === 0) return this.source.get();;
 
         var parent = this.getParent(cursorPath);
-        //console.log(parent);
         if (parent === undefined) return;
         var property = cursorPath[cursorPath.length - 1];
         return parent[property];
@@ -34,11 +39,11 @@ export default class FreezerPathObjectBinder implements IPathObjectBinder {
 
     public setValue(path: Path, value: string) {
         if (path === undefined) return;
-        var cursorPath = !isPathArray(path) ? castPath(path) : path;
+        var cursorPath = castPath(path);
         if (cursorPath.length === 0) return;
 
         var parent = this.getParent(cursorPath);
-        //console.log(parent);
+
         if (parent === undefined) return;
         var property = cursorPath[cursorPath.length - 1];
         var updated = parent.set(property, value);
@@ -47,13 +52,14 @@ export default class FreezerPathObjectBinder implements IPathObjectBinder {
 
     private getParent(cursorPath: Array<string | number>) {
         if (cursorPath.length == 0) return;
-        if (cursorPath.length == 1) return this.freezer.get();
-        var source = this.freezer.get();
+        var source = this.source.get();
+        if (cursorPath.length == 1) return followRef(this.root.get(), source);
+
         var parentPath = cursorPath.slice(0, cursorPath.length - 1);
         var parent = get(source, parentPath);
-        if (parent !== undefined) return parent;
+        if (parent !== undefined) return followRef(this.root.get(), parent);
 
-        var updated = this.setWith(source, parentPath,{});
+        var updated = this.setWith(source, parentPath, {});
         return get(updated, parentPath);
 
     }

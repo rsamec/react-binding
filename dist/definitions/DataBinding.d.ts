@@ -1,11 +1,11 @@
 export interface BinderStatic {
-    bindToState?(data: any, key: string, path?: string, converter?: IValueConverter, converterParams?: any): ObjectBinding;
-    bindTo(parent: any, path?: string, converter?: IValueConverter, converterParams?: any): ObjectBinding;
-    bindArrayToState?(data: any, key: string, path?: string, converter?: IValueConverter, converterParams?: any): ArrayBinding;
-    bindArrayTo(parent: any, path?: string, converter?: IValueConverter, converterParams?: any): ArrayBinding;
+    bindToState?(data: any, key: string, path?: Path, converter?: IValueConverter, converterParams?: any): ObjectBinding;
+    bindTo(parent: any, path?: Path, converter?: IValueConverter, converterParams?: any): ObjectBinding;
+    bindArrayToState?(data: any, key: string, path?: Path, converter?: IValueConverter, converterParams?: any): ArrayBinding;
+    bindArrayTo(parent: any, path?: Path, converter?: IValueConverter, converterParams?: any): ArrayBinding;
 }
 export interface Binding {
-    path?: string;
+    path?: Array<string | number>;
     parent: Binding;
     root: Binding;
 }
@@ -19,7 +19,8 @@ export interface ArrayBinding extends Binding {
     splice(start: number, deleteCount: number, elementsToAdd?: any): any;
     move(x: number, y: number): any;
 }
-/**x`
+export declare type Path = string | Array<string | number>;
+/**
  * Two-way data binding for React.
  */
 /**
@@ -29,11 +30,11 @@ export interface IPathObjectBinder {
     /**
      It gets value at the passed path expression.
      */
-    getValue(path?: string): any;
+    getValue(path?: Path): any;
     /**
      It sets the passed value at the passed path.
      */
-    setValue(path: string, value: any): any;
+    setValue(path: Path, value: any): any;
     subscribe(fce: any): void;
 }
 /**
@@ -53,7 +54,6 @@ export interface IRequestChange {
  */
 export interface IPathObjectBinding extends ObjectBinding {
     source: IPathObjectBinder;
-    provider: (data) => IPathObjectBinder;
     notifyChange?: INotifyChange;
     requestChange?: IRequestChange;
     valueConverter?: IValueConverter;
@@ -62,14 +62,12 @@ export interface IPathObjectBinding extends ObjectBinding {
  It represents binding to property at source object at a given path.
  */
 export declare class PathObjectBinding implements IPathObjectBinding {
-    sourceObject: any;
-    provider: (data) => IPathObjectBinder;
-    path: string;
+    source: IPathObjectBinder;
     notifyChange: INotifyChange;
     valueConverter: IValueConverter;
     parentNode: Binding;
-    source: IPathObjectBinder;
-    constructor(sourceObject: any, provider: (data) => IPathObjectBinder, path?: string, notifyChange?: INotifyChange, valueConverter?: IValueConverter, parentNode?: Binding);
+    path: Array<string | number>;
+    constructor(source: IPathObjectBinder, rootPath?: Path, notifyChange?: INotifyChange, valueConverter?: IValueConverter, parentNode?: Binding);
     requestChange: IRequestChange;
     root: Binding;
     parent: Binding;
@@ -79,13 +77,11 @@ export declare class PathObjectBinding implements IPathObjectBinding {
  It represents binding to property at source object at a given path.
  */
 export declare class ArrayObjectBinding implements ArrayBinding {
-    sourceObject: any;
-    provider: (data) => IPathObjectBinder;
-    path: string;
+    source: IPathObjectBinder;
     notifyChange: INotifyChange;
     valueConverter: IValueConverter;
-    source: IPathObjectBinder;
-    constructor(sourceObject: any, provider: (data) => IPathObjectBinder, path?: string, notifyChange?: INotifyChange, valueConverter?: IValueConverter);
+    path: Array<string | number>;
+    constructor(source: IPathObjectBinder, rootPath?: Path, notifyChange?: INotifyChange, valueConverter?: IValueConverter);
     parent: ArrayBinding;
     root: ArrayBinding;
     items: Array<IPathObjectBinding>;
@@ -99,15 +95,14 @@ export declare class ArrayObjectBinding implements ArrayBinding {
  */
 export declare class ArrayParentBinding implements ArrayBinding {
     private parentBinding;
-    relativePath: string;
     valueConverter: IValueConverter;
-    constructor(parentBinding: IPathObjectBinding, relativePath?: string, valueConverter?: IValueConverter);
+    relativePath: Array<string | number>;
+    constructor(parentBinding: IPathObjectBinding, subPath?: Path, valueConverter?: IValueConverter);
     source: IPathObjectBinder;
-    provider: (data) => IPathObjectBinder;
     root: Binding;
     parent: Binding;
     notifyChange: INotifyChange;
-    path: string;
+    path: Array<string | number>;
     private getItems();
     items: Array<IPathObjectBinding>;
     add(defaultItem?: any): void;
@@ -120,16 +115,15 @@ export declare class ArrayParentBinding implements ArrayBinding {
  */
 export declare class PathParentBinding implements IPathObjectBinding {
     private parentBinding;
-    relativePath: any;
     valueConverter: IValueConverter;
-    constructor(parentBinding: IPathObjectBinding, relativePath: any, valueConverter?: IValueConverter);
+    relativePath: Array<string | number>;
+    constructor(parentBinding: IPathObjectBinding, subPath: Path, valueConverter?: IValueConverter);
     source: IPathObjectBinder;
-    provider: (data) => IPathObjectBinder;
     root: Binding;
     parent: Binding;
     notifyChange: INotifyChange;
     requestChange: IRequestChange;
-    path: string;
+    path: Array<string | number>;
     value: any;
 }
 /**

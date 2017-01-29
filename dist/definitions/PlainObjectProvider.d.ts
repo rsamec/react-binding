@@ -1,14 +1,14 @@
-import { IPathObjectBinder } from './DataBinding';
+import { IPathObjectBinder, Path } from './DataBinding';
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
 export default class PathObjectBinder implements IPathObjectBinder {
+    private root;
     private source;
-    constructor(source: any);
+    constructor(root: any, source?: any);
     subscribe(updateFce: any): void;
-    getValue(path: string): any;
-    setValue(path: string, value: string): void;
-    private getParent(path);
-    static getProperty(path: any): string;
-    private string_to_ref(obj, s);
+    createNew(path: Path, newItem?: any): IPathObjectBinder;
+    getValue(path: Path): any;
+    setValue(path: Path, value: any): void;
+    private getParent(cursorPath);
 }
