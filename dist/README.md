@@ -2,33 +2,42 @@
 
 React-binding is lightweight utility for two-way data binding in [React][react].
 
-Note: React-binding as mixins - use npm install react-binding@0.6.4
+``` js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Binder from 'react-binding';
 
-```js
-import {Binder} from 'react-binding'
+export default class Form extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {data: {}};
+  },
+  render {
+    return (
+      <div>
+        <input valueLink={Binder.bindToState(this,"data", "Employee.FirstName")} />
+        <div>FirstName: {this.state.data.Employee.FirstName}</div>
+      </div>
+    )}
+});
+
+ReactDOM.render(
+  <Form />,
+  document.getElementById('content')
+);
+
 ```
+## Features:
 
-```js
++   No dependencies.
++   Minimal interface - using path with dot notation.
++   Support for complex objects.
++   Support for collection-based structures - arrays and lists.
++   Support for value converters.
++   No need to define initial values, nested structures. Binder creates this for you.
++   Support concept for references to allow JSON to be used to represent graph information.
 
-Binder.bindToState(this,"data","__Employee.FirstName__");
-Binder.bindToArrayState(this,"data","__Hobbies__");
-
-Binder.bindTo(__employee__,"__Contact.Email__");
-Binder.bindToArray(__employee__,"__Hobbies__");
-
-```
-
-```js
-
-Binder.bindToState(this,"data","__Employee.FirstName__");
-Binder.bindToArrayState(this,"data","__Hobbies__");
-
-Binder.bindTo(__employee__,"__Contact.Email__");
-Binder.bindToArray(__employee__,"__Hobbies__");
-
-```
-
-[BindToMixin](https://github.com/rsamec/react-binding) offers two-way data binding support for:
+[react-binding](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
 +   object properties with path expression (dot notation)
     +   Binder.bindToState(this,"data","__Employee.FirstName__");
@@ -84,27 +93,32 @@ __minimal example__
 
 ``` js
 import React from 'react';
-import {Binder} from 'react-binding'
+import ReactDOM from 'react-dom';
+import Binder from 'react-binding';
 
-var Form = React.createClass({
-  getInitialState: function () {
-    return {data: {}}
+export default class Form extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {data: {}};
   },
-  render: function () {
+  render {
     return (
       <div>
-        <input valueLink={Binder.bindToState(this,"data", "FirstName")} />
-        <div>FirstName: {this.state.data.FirstName}</div>
+        <input valueLink={Binder.bindToState(this,"data", "Employee.FirstName")} />
+        <div>FirstName: {this.state.data.Employee.FirstName}</div>
       </div>
     )}
 });
 
-React.render(
+ReactDOM.render(
   <Form />,
   document.getElementById('content')
 );
 
 ```
+
+__Note__: React-binding as mixins - use npm install react-binding@0.6.4
+
 # Overview
 
 ### bindToState(key,pathExpression)
@@ -142,8 +156,8 @@ It enables to bind to complex object with nested properties and reuse bindings i
 
 +   binding to state at root level
 ``` js
-  <PersonComponent personModel={Binder.bindToState("data","Employee")} />
-  <PersonComponent personModel={Binder.bindToState("data","Deputy")} />
+  <PersonComponent personModel={Binder.bindToState(this,"data","Employee")} />
+  <PersonComponent personModel={Binder.bindToState(this,"data","Deputy")} />
 ```
 
 +   binding to parent
@@ -284,6 +298,35 @@ using converter
 ```
 
 [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/preview)
+
+### References
+
+JSON models trees, and most application domains are graphs. Binding supports concept for references to allow JSON to be used to represent graph information.
+
++   Each entity is inserted into a single, globally unique location in the JSON with a unique identifier.
++   Each reference is an object of the $type='ref' and must contain value as path to single, globally unique location in the JSON - {$type:'ref',value:['todosById',44]}
+
+
+``` js
+{
+    todosById: {
+        "44": {
+            name: "get milk from corner store",
+            done: false,
+            prerequisites: [{ $type: "ref", value: ["todosById", 54] }]
+        },
+        "54": {
+            name: "withdraw money from ATM",
+            done: false,
+            prerequisites: []
+        }
+    },
+    todos: [
+        { $type: "ref", value: ["todosById", 44] },
+        { $type: "ref", value: ["todosById", 54] }
+    ]
+};
+```
 
 # Examples
 

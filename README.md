@@ -32,10 +32,10 @@ ReactDOM.render(
 +   No dependencies.
 +   Minimal interface - using path with dot notation.
 +   Support for complex objects.
-+   Support for  collection-based structures - arrays and lists.
++   Support for collection-based structures - arrays and lists.
 +   Support for value converters.
 +   No need to define initial values, nested structures. Binder creates this for you.
-+   Lightweight.  
++   Support concept for references to allow JSON to be used to represent graph information.
 
 [react-binding](https://github.com/rsamec/react-binding) offers two-way data binding support for:
 
@@ -298,6 +298,35 @@ using converter
 ```
 
 [try in Plunker](http://embed.plnkr.co/gGWe82wT2JJflZt095Gk/preview)
+
+### References
+
+JSON models trees, and most application domains are graphs. Binding supports concept for references to allow JSON to be used to represent graph information.
+
++   Each entity is inserted into a single, globally unique location in the JSON with a unique identifier.
++   Each reference is an object of the $type='ref' and must contain value as path to single, globally unique location in the JSON - {$type:'ref',value:['todosById',44]}
+
+
+``` js
+{
+    todosById: {
+        "44": {
+            name: "get milk from corner store",
+            done: false,
+            prerequisites: [{ $type: "ref", value: ["todosById", 54] }]
+        },
+        "54": {
+            name: "withdraw money from ATM",
+            done: false,
+            prerequisites: []
+        }
+    },
+    todos: [
+        { $type: "ref", value: ["todosById", 44] },
+        { $type: "ref", value: ["todosById", 54] }
+    ]
+};
+```
 
 # Examples
 
