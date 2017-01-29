@@ -83,7 +83,7 @@ var Binder = (function () {
      * @returns {DataBinding.PathObjectBinding}
      */
     Binder.bindToState = function (component, key, path, converter, converterParams) {
-        return new DataBinding_1.PathObjectBinding(component["state"][key], path, Binder.createStateKeySetter(component, key), converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter);
+        return new DataBinding_1.PathObjectBinding(new PlainObjectProvider_1.default(component["state"][key]), path, Binder.createStateKeySetter(component, key), converterParams !== undefined ? new DataBinding_1.CurryConverter(converter, converterParams) : converter);
     };
     /**
      * It enables to bind to complex object with nested properties and reuse bindings in components.
@@ -142,7 +142,7 @@ var Binder = (function () {
      * @returns {DataBinding.ArrayObjectBinding}
      */
     Binder.bindArrayToState = function (component, key, path) {
-        return new DataBinding_1.ArrayObjectBinding(component["state"][key], path, Binder.createStateKeySetter(component, key));
+        return new DataBinding_1.ArrayObjectBinding(new PlainObjectProvider_1.default(component["state"][key]), path, Binder.createStateKeySetter(component, key));
     };
     /**
      * It enables binding to collection-based structures (array) for nested arrays. It enables to add and remove items.

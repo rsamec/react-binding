@@ -86,7 +86,7 @@ export default class Binder {
      */
     static bindToState(component, key: string, path?: string, converter?: IValueConverter, converterParams?): IPathObjectBinding {
         return new PathObjectBinding(
-            component["state"][key],
+            new Provider(component["state"][key]),
             path,
             Binder.createStateKeySetter(component, key),
             converterParams !== undefined ? new CurryConverter(converter, converterParams) : converter
@@ -153,7 +153,7 @@ export default class Binder {
      */
     static bindArrayToState(component, key: string, path?: string): ArrayObjectBinding {
         return new ArrayObjectBinding(
-            component["state"][key],
+            new Provider(component["state"][key]),
             path,
             Binder.createStateKeySetter(component, key)
             //ReactStateSetters.createStateKeySetter(this, key)
