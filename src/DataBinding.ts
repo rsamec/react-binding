@@ -137,7 +137,8 @@ export class ArrayObjectBinding implements ArrayBinding {
 
         if (items === undefined) return [];
         return items.map(function (item, index) {
-            return new PathObjectBinding(this.source.createNew(this.path.concat(index)), undefined, this.notifyChange, undefined, this);
+            //console.log(item);
+            return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
         }, this);
     }
 
@@ -216,19 +217,33 @@ export class ArrayParentBinding implements ArrayBinding {
         if (this.relativePath === undefined) return this.parentBinding.path;
         return this.parentBinding.path.concat(this.relativePath);
     }
+    private cachedBindings: { items:Array<any>,length:number, bindings: Array<PathObjectBinding> };
+    private clearCache() {
+        this.cachedBindings === undefined;
+    }
     private getItems(): Array<any> {
         if (this.source === undefined) return;
         var value = this.source.getValue(this.path);
         return this.valueConverter !== undefined ? this.valueConverter.format(value) : value;
     }
     public get items(): Array<IPathObjectBinding> {
+        // var path = this.path.join(".");
+        // console.time(path);
+        
         var items = this.getItems();
-
         if (items === undefined) return [];
-        return items.map(function (item, index) {
-            //item._parentBinding = this;            
-            return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
-        }, this);
+        if (this.cachedBindings !== undefined && this.cachedBindings.items === items && this.cachedBindings.length === items.length) return this.cachedBindings.bindings;
+        
+        this.cachedBindings = {
+            items: items,
+            length: items.length,
+            bindings: items.map(function (item, index) {
+                return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
+            }, this)
+        };
+        //console.timeEnd(path);
+        return this.cachedBindings.bindings;
+
     }
 
     public add(defaultItem?) {
@@ -240,6 +255,7 @@ export class ArrayParentBinding implements ArrayBinding {
 
         if (defaultItem === undefined) defaultItem = {};
         items.push(defaultItem);
+        this.clearCache();
         if (this.notifyChange !== undefined) this.notifyChange();
     }
 
@@ -249,7 +265,7 @@ export class ArrayParentBinding implements ArrayBinding {
         var index = items.indexOf(itemToRemove);
         if (index === -1) return;
         items.splice(index, 1);
-
+        this.clearCache();
         if (this.notifyChange !== undefined) this.notifyChange();
     }
     public splice(start: number, deleteCount: number, elementsToAdd?: any) {
@@ -261,6 +277,7 @@ export class ArrayParentBinding implements ArrayBinding {
     }
     public move(x, y) {
         this.splice(y, 0, this.splice(x, 1)[0]);
+        this.clearCache();
         if (this.notifyChange !== undefined) this.notifyChange();
     }
 }
@@ -312,10 +329,13 @@ export class PathParentBinding implements IPathObjectBinding {
     public get value() {
         var value = this.source.getValue(this.path);
         //get value - optional call converter
-        return this.valueConverter !== undefined ? this.valueConverter.format(value) : value;
+        var result = this.valueConverter !== undefined ? this.valueConverter.format(value) : value;
+        return result;
     }
 
     public set value(value: any) {
+        //var path = this.path.join(".");
+        //console.time(path);
 
         //check if the value is really changed - strict equality
         var previousValue = this.source.getValue(this.path);
@@ -325,7 +345,10 @@ export class PathParentBinding implements IPathObjectBinding {
 
         //set value - optional call converter
         this.source.setValue(this.path, convertedValueToBeSet);
+        //console.timeEnd(path);
         if (this.notifyChange !== undefined) this.notifyChange();
+
+
     }
 }
 /**

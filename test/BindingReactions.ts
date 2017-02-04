@@ -4,7 +4,6 @@ var expect1 = require('expect.js');
 import MobxBinder from '../src/MobxBinder';
 import { PersonConverter } from './utils/converters';
 import { observable, reaction } from 'mobx';
-import { get, set } from 'lodash';
 
 
 describe('DataBinding - Mobx reactions', function () {
@@ -294,7 +293,7 @@ describe('Freezer props test', function () {
                 //currentCursor.push(prop);
                 reaction(box.name, bindingProp,
                     (val) => {
-                        get(freezer.get(), currentCursor).set(prop, val);
+                        //get(freezer.get(), currentCursor).set(prop, val);
                         //props.set(prop, val);
                         //console.log(currentCursor.join(','))
                     }, false);
