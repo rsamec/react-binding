@@ -15,10 +15,9 @@ export default class PathObjectBinder implements IPathObjectBinder {
         //     if (updateFce!==undefined) updateFce(state,prevState)}
         // );
     }
-    public createNew(path: Path, newItem?: any): IPathObjectBinder {
-        var item = followRef(this.root, newItem || this.getValue(path));
-        //console.log(item);
-        return new PathObjectBinder(this.root, item);
+    public createNew(path: Path, newItem?: any): IPathObjectBinder {        
+        //var item = followRef(this.root, newItem || this.getValue(path));
+        return new PathObjectBinder(this.root, newItem || this.getValue(path));
     }
 
     public getValue(path: Path) {

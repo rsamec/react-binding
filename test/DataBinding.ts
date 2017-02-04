@@ -1087,7 +1087,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
         });
 
 
-        it('set direct object ', function () {
+        it('set value to plain object ', function () {
             //setup
             var root = Binder.bindTo(cloneDeep(TODOS_DATA), "Data");
             var task = Binder.bindTo(root, "todosById[54].done");
@@ -1101,7 +1101,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
             expect1(Binder.bindTo(root, "todos[1].done").value).to.equal(true);
         });
 
-        it('set by reference by binded array', function () {
+        it('set value by reference by binded array', function () {
             //setup
             var root = Binder.bindTo(cloneDeep(TODOS_DATA), "Data");
             var row = Binder.bindArrayTo(root, "todos").items[1];
@@ -1116,7 +1116,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
             expect1(Binder.bindTo(root, "todos[1].done").value).to.equal(true);
         });
 
-        it('set by reference by path', function () {
+        it('set value by reference by path', function () {
             //setup
             var root = Binder.bindTo(cloneDeep(TODOS_DATA), "Data");
             var task = Binder.bindTo(root, "todos[1].done");
@@ -1130,7 +1130,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
             expect1(Binder.bindTo(root, "todos[1].done").value).to.equal(true);
         });
 
-        it('set by deep reference by binded array', function () {
+        it('set value by deep reference by binded array', function () {
             //setup
             var root = Binder.bindTo(cloneDeep(TODOS_DATA), "Data");
             var row = Binder.bindArrayTo(root, "todos").items[0];
@@ -1146,7 +1146,7 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
             expect1(Binder.bindTo(root, "todos[1].done").value).to.equal(true);
         });
 
-        it('set by deep reference by path', function () {
+        it('set value by deep reference by path', function () {
             //setup
             var root = Binder.bindTo(cloneDeep(TODOS_DATA), "Data");
             var task = Binder.bindTo(root, "todos[0].prerequisites[0].done");
@@ -1158,6 +1158,62 @@ var testSuite = (Binder: BindTo.BinderStatic) => {
             expect1(task.value).to.equal(true);
             expect1(Binder.bindTo(root, "todos[0].prerequisites[0].done").value).to.equal(true);
             expect1(Binder.bindTo(root, "todos[1].done").value).to.equal(true);
+        });
+
+        it('get reference by deep reference by path', function () {
+            //setup
+            var root = Binder.bindTo(cloneDeep(TODOS_DATA), "Data");
+            
+            var tasks = Binder.bindArrayTo(root, "todos");
+
+            var firstTaskRef = Binder.bindTo(root, "todos[0]");
+            var secondTaskRef = Binder.bindTo(root, "todos[1]");
+            var anotherTaskRef = Binder.bindTo(root, "todos[0].prerequisites[0]");
+
+          
+            //verify references
+            expect1(tasks.items[0].value.value.join(".")).to.equal("Data.todosById.44");
+            expect1(tasks.items[1].value.value.join(".")).to.equal("Data.todosById.54");
+            
+            expect1(firstTaskRef.value.value.join(".")).to.equal("Data.todosById.44");
+            expect1(secondTaskRef.value.value.join(".")).to.equal("Data.todosById.54");
+            expect1(anotherTaskRef.value.value.join(".")).to.equal("Data.todosById.54");
+            // expect1(Binder.bindTo(root, "todos[0].prerequisites[0].done").value).to.equal(true);
+            // expect1(Binder.bindTo(root, "todos[1].done").value).to.equal(true);
+        });
+
+         it('set reference by deep reference by path', function () {
+            //setup
+            var root = Binder.bindTo(cloneDeep(TODOS_DATA), "Data");
+            var todosById = Binder.bindTo(root, "todosById");
+            
+            var tasks = Binder.bindArrayTo(root, "todos");
+
+            var firstTaskRef = Binder.bindTo(root, "todos[0]");
+            var secondTaskRef = Binder.bindTo(root, "todos[1]");
+            
+            var anotherTaskRef = Binder.bindTo(root, "todos[0].prerequisites[0]");
+
+          
+         
+            //exec add new task
+            Binder.bindTo(root,"todosById.64").value = {name:'newTask'};
+            tasks.add({$type:'ref',value:['Data','todosById',64]})
+            var thirdTaskRef = Binder.bindTo(root, "todos[2]");
+
+            //verify references           
+            expect1(tasks.items[0].value.value.join(".")).to.equal("Data.todosById.44");
+            expect1(tasks.items[1].value.value.join(".")).to.equal("Data.todosById.54");
+            expect1(tasks.items[2].value.value.join(".")).to.equal("Data.todosById.64");
+            
+            expect1(firstTaskRef.value.value.join(".")).to.equal("Data.todosById.44");
+            expect1(secondTaskRef.value.value.join(".")).to.equal("Data.todosById.54");
+            expect1(thirdTaskRef.value.value.join(".")).to.equal("Data.todosById.64");
+
+            expect1(anotherTaskRef.value.value.join(".")).to.equal("Data.todosById.54");
+
+            expect1(Binder.bindTo(root, "todos[2].name").value).to.equal('newTask');
+
         });
     })
 }

@@ -17,8 +17,8 @@ export default class MobxPathObjectBinder implements IPathObjectBinder {
         this.source = source=== undefined?this.root:source;
     }
     public createNew(path:Path,newItem?:any):IPathObjectBinder{
-        var item = followRef(this.root,newItem || this.getValue(path))
-        return new MobxPathObjectBinder(this.root,item)
+        //var item = followRef(this.root,newItem || this.getValue(path))
+        return new MobxPathObjectBinder(this.root,newItem || this.getValue(path))
     }
     public subscribe(updateFce) {
         // var previousState;

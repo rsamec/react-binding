@@ -9,26 +9,30 @@ import { IPathObjectBinder, Path } from './DataBinding';
 export default class FreezerPathObjectBinder implements IPathObjectBinder {
 
     private root;
-    constructor(rootParams: any, private source?: any) {
-        this.root = source === undefined ? new Freezer(rootParams) : rootParams;
-        this.source = source === undefined ? this.root : source;
-
+    constructor(rootParams: any, private subSource?: any) {
+        this.root = subSource === undefined ? new Freezer(rootParams) : rootParams;
+        //this.source = source === undefined ? this.root : source;
+    }
+    private get source() {
+        return this.subSource !== undefined?this.subSource.get():this.root.get();
     }
     public createNew(path: Path, newItem?: any): IPathObjectBinder {
-        var item = followRef(this.root.get(), newItem || this.getValue(path));
-        return new FreezerPathObjectBinder(this.source, new Freezer(item))
+        var item = newItem || this.getValue(path);
+        //var item = followRef(this.root.get(), newItem || this.getValue(path));
+        return new FreezerPathObjectBinder(this.root, new Freezer(item))
     }
     public subscribe(updateFce) {
-        this.source.on('update', function (state, prevState) {
+        this.root.on('update', function (state, prevState) {
+            //console.log(state);
             if (updateFce !== undefined) updateFce(state, prevState)
         }
         );
     }
 
     public getValue(path?: Path) {
-        if (path === undefined) return this.source.get();
+        if (path === undefined) return this.source;
         var cursorPath = castPath(path);
-        if (cursorPath.length === 0) return this.source.get();;
+        if (cursorPath.length === 0) return this.source;
 
         var parent = this.getParent(cursorPath);
         if (parent === undefined) return;
@@ -52,7 +56,7 @@ export default class FreezerPathObjectBinder implements IPathObjectBinder {
 
     private getParent(cursorPath: Array<string | number>) {
         if (cursorPath.length == 0) return;
-        var source = this.source.get();
+        var source = this.source;
         if (cursorPath.length == 1) return followRef(this.root.get(), source);
 
         var parentPath = cursorPath.slice(0, cursorPath.length - 1);
