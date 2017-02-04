@@ -1,3 +1,4 @@
+"use strict";
 var Freezer = require('freezer-js');
 var utils_1 = require('./utils');
 var utils_lodash_1 = require('./utils-lodash');
@@ -5,28 +6,36 @@ var utils_lodash_1 = require('./utils-lodash');
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
 var FreezerPathObjectBinder = (function () {
-    function FreezerPathObjectBinder(rootParams, source) {
-        this.source = source;
-        this.root = source === undefined ? new Freezer(rootParams) : rootParams;
-        this.source = source === undefined ? this.root : source;
+    function FreezerPathObjectBinder(rootParams, subSource) {
+        this.subSource = subSource;
+        this.root = subSource === undefined ? new Freezer(rootParams) : rootParams;
+        //this.source = source === undefined ? this.root : source;
     }
+    Object.defineProperty(FreezerPathObjectBinder.prototype, "source", {
+        get: function () {
+            return this.subSource !== undefined ? this.subSource.get() : this.root.get();
+        },
+        enumerable: true,
+        configurable: true
+    });
     FreezerPathObjectBinder.prototype.createNew = function (path, newItem) {
-        var item = utils_1.followRef(this.root.get(), newItem || this.getValue(path));
-        return new FreezerPathObjectBinder(this.source, new Freezer(item));
+        var item = newItem || this.getValue(path);
+        //var item = followRef(this.root.get(), newItem || this.getValue(path));
+        return new FreezerPathObjectBinder(this.root, new Freezer(item));
     };
     FreezerPathObjectBinder.prototype.subscribe = function (updateFce) {
-        this.source.on('update', function (state, prevState) {
+        this.root.on('update', function (state, prevState) {
+            //console.log(state);
             if (updateFce !== undefined)
                 updateFce(state, prevState);
         });
     };
     FreezerPathObjectBinder.prototype.getValue = function (path) {
         if (path === undefined)
-            return this.source.get();
+            return this.source;
         var cursorPath = utils_1.castPath(path);
         if (cursorPath.length === 0)
-            return this.source.get();
-        ;
+            return this.source;
         var parent = this.getParent(cursorPath);
         if (parent === undefined)
             return;
@@ -49,7 +58,7 @@ var FreezerPathObjectBinder = (function () {
     FreezerPathObjectBinder.prototype.getParent = function (cursorPath) {
         if (cursorPath.length == 0)
             return;
-        var source = this.source.get();
+        var source = this.source;
         if (cursorPath.length == 1)
             return utils_1.followRef(this.root.get(), source);
         var parentPath = cursorPath.slice(0, cursorPath.length - 1);
@@ -82,6 +91,6 @@ var FreezerPathObjectBinder = (function () {
         return nested;
     };
     return FreezerPathObjectBinder;
-})();
+}());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = FreezerPathObjectBinder;

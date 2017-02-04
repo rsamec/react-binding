@@ -1,3 +1,4 @@
+"use strict";
 var PlainObjectProvider_1 = require('./PlainObjectProvider');
 var DataBinding_1 = require('./DataBinding');
 var BinderCore = (function () {
@@ -12,7 +13,7 @@ var BinderCore = (function () {
         return (parent instanceof DataBinding_1.PathObjectBinding || parent instanceof DataBinding_1.PathParentBinding) ? new DataBinding_1.ArrayParentBinding(parent, path, converter) : new DataBinding_1.ArrayObjectBinding(new type(parent), path, converter);
     };
     return BinderCore;
-})();
+}());
 exports.BinderCore = BinderCore;
 /**
  * React [LinkedStateMixin](http://facebook.github.io/react/docs/two-way-binding-helpers.html) is an easy way to express two-way data binding in React.
@@ -161,7 +162,7 @@ var Binder = (function () {
         return BinderCore.bindArrayTo(PlainObjectProvider_1.default, parent, path, converter, converterParams);
     };
     return Binder;
-})();
+}());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Binder;
 //export default Binder; 

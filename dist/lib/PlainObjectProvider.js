@@ -1,3 +1,4 @@
+"use strict";
 var utils_1 = require('./utils');
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
@@ -13,9 +14,8 @@ var PathObjectBinder = (function () {
         // );
     };
     PathObjectBinder.prototype.createNew = function (path, newItem) {
-        var item = utils_1.followRef(this.root, newItem || this.getValue(path));
-        //console.log(item);
-        return new PathObjectBinder(this.root, item);
+        //var item = followRef(this.root, newItem || this.getValue(path));
+        return new PathObjectBinder(this.root, newItem || this.getValue(path));
     };
     PathObjectBinder.prototype.getValue = function (path) {
         if (path === undefined)
@@ -56,6 +56,6 @@ var PathObjectBinder = (function () {
         return utils_1.baseGet(this.source, parentPath);
     };
     return PathObjectBinder;
-})();
+}());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PathObjectBinder;

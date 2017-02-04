@@ -1,3 +1,4 @@
+"use strict";
 var utils_lodash_1 = require('./utils-lodash');
 var $ref = "ref";
 function castPath(value, object) {

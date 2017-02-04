@@ -1,3 +1,4 @@
+"use strict";
 var utils_1 = require("./utils");
 /**
  It represents binding to property at source object at a given path.
@@ -58,7 +59,7 @@ var PathObjectBinding = (function () {
         configurable: true
     });
     return PathObjectBinding;
-})();
+}());
 exports.PathObjectBinding = PathObjectBinding;
 /**
  It represents binding to property at source object at a given path.
@@ -90,7 +91,8 @@ var ArrayObjectBinding = (function () {
             if (items === undefined)
                 return [];
             return items.map(function (item, index) {
-                return new PathObjectBinding(this.source.createNew(this.path.concat(index)), undefined, this.notifyChange, undefined, this);
+                //console.log(item);
+                return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -136,7 +138,7 @@ var ArrayObjectBinding = (function () {
         this.source.setValue(this.path, itemsCloned);
     };
     return ArrayObjectBinding;
-})();
+}());
 exports.ArrayObjectBinding = ArrayObjectBinding;
 /**
  It represents binding to array using relative path to parent object.
@@ -191,6 +193,9 @@ var ArrayParentBinding = (function () {
         enumerable: true,
         configurable: true
     });
+    ArrayParentBinding.prototype.clearCache = function () {
+        this.cachedBindings === undefined;
+    };
     ArrayParentBinding.prototype.getItems = function () {
         if (this.source === undefined)
             return;
@@ -199,13 +204,22 @@ var ArrayParentBinding = (function () {
     };
     Object.defineProperty(ArrayParentBinding.prototype, "items", {
         get: function () {
+            // var path = this.path.join(".");
+            // console.time(path);
             var items = this.getItems();
             if (items === undefined)
                 return [];
-            return items.map(function (item, index) {
-                //item._parentBinding = this;            
-                return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
-            }, this);
+            if (this.cachedBindings !== undefined && this.cachedBindings.items === items && this.cachedBindings.length === items.length)
+                return this.cachedBindings.bindings;
+            this.cachedBindings = {
+                items: items,
+                length: items.length,
+                bindings: items.map(function (item, index) {
+                    return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
+                }, this)
+            };
+            //console.timeEnd(path);
+            return this.cachedBindings.bindings;
         },
         enumerable: true,
         configurable: true
@@ -219,6 +233,7 @@ var ArrayParentBinding = (function () {
         if (defaultItem === undefined)
             defaultItem = {};
         items.push(defaultItem);
+        this.clearCache();
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
@@ -230,6 +245,7 @@ var ArrayParentBinding = (function () {
         if (index === -1)
             return;
         items.splice(index, 1);
+        this.clearCache();
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
@@ -242,11 +258,12 @@ var ArrayParentBinding = (function () {
     };
     ArrayParentBinding.prototype.move = function (x, y) {
         this.splice(y, 0, this.splice(x, 1)[0]);
+        this.clearCache();
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
     return ArrayParentBinding;
-})();
+}());
 exports.ArrayParentBinding = ArrayParentBinding;
 /**
  It represents binding to relative path for parent object.
@@ -313,9 +330,12 @@ var PathParentBinding = (function () {
         get: function () {
             var value = this.source.getValue(this.path);
             //get value - optional call converter
-            return this.valueConverter !== undefined ? this.valueConverter.format(value) : value;
+            var result = this.valueConverter !== undefined ? this.valueConverter.format(value) : value;
+            return result;
         },
         set: function (value) {
+            //var path = this.path.join(".");
+            //console.time(path);
             //check if the value is really changed - strict equality
             var previousValue = this.source.getValue(this.path);
             var convertedValueToBeSet = this.valueConverter !== undefined ? this.valueConverter.parse(value) : value;
@@ -323,6 +343,7 @@ var PathParentBinding = (function () {
                 return;
             //set value - optional call converter
             this.source.setValue(this.path, convertedValueToBeSet);
+            //console.timeEnd(path);
             if (this.notifyChange !== undefined)
                 this.notifyChange();
         },
@@ -330,7 +351,7 @@ var PathParentBinding = (function () {
         configurable: true
     });
     return PathParentBinding;
-})();
+}());
 exports.PathParentBinding = PathParentBinding;
 var CurryConverter = (function () {
     function CurryConverter(converter, args) {
@@ -349,5 +370,5 @@ var CurryConverter = (function () {
         return this.parseFce(value);
     };
     return CurryConverter;
-})();
+}());
 exports.CurryConverter = CurryConverter;

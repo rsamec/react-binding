@@ -1909,16 +1909,7 @@ function isnan (val) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/node_modules\\buffer\\index.js","/node_modules\\buffer")
-},{"_process":5,"base64-js":1,"buffer":2,"ieee754":4,"isarray":3}],3:[function(require,module,exports){
-(function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
-var toString = {}.toString;
-
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
-
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/node_modules\\buffer\\node_modules\\isarray\\index.js","/node_modules\\buffer\\node_modules\\isarray")
-},{"_process":5,"buffer":2}],4:[function(require,module,exports){
+},{"_process":5,"base64-js":1,"buffer":2,"ieee754":3,"isarray":4}],3:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -2006,6 +1997,15 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/node_modules\\ieee754\\index.js","/node_modules\\ieee754")
+},{"_process":5,"buffer":2}],4:[function(require,module,exports){
+(function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer,arguments[3],arguments[4],arguments[5],arguments[6],"/node_modules\\isarray\\index.js","/node_modules\\isarray")
 },{"_process":5,"buffer":2}],5:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 // shim for using process in browser
@@ -2193,8 +2193,8 @@ process.umask = function() { return 0; };
 },{"_process":5,"buffer":2}],6:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 "use strict";
-var PlainObjectProvider_1 = require("./PlainObjectProvider");
-var DataBinding_1 = require("./DataBinding");
+var PlainObjectProvider_1 = require('./PlainObjectProvider');
+var DataBinding_1 = require('./DataBinding');
 var BinderCore = (function () {
     function BinderCore() {
     }
@@ -2457,7 +2457,8 @@ var ArrayObjectBinding = (function () {
             if (items === undefined)
                 return [];
             return items.map(function (item, index) {
-                return new PathObjectBinding(this.source.createNew(this.path.concat(index)), undefined, this.notifyChange, undefined, this);
+                //console.log(item);
+                return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
             }, this);
         },
         enumerable: true,
@@ -2558,6 +2559,9 @@ var ArrayParentBinding = (function () {
         enumerable: true,
         configurable: true
     });
+    ArrayParentBinding.prototype.clearCache = function () {
+        this.cachedBindings === undefined;
+    };
     ArrayParentBinding.prototype.getItems = function () {
         if (this.source === undefined)
             return;
@@ -2566,13 +2570,22 @@ var ArrayParentBinding = (function () {
     };
     Object.defineProperty(ArrayParentBinding.prototype, "items", {
         get: function () {
+            // var path = this.path.join(".");
+            // console.time(path);
             var items = this.getItems();
             if (items === undefined)
                 return [];
-            return items.map(function (item, index) {
-                //item._parentBinding = this;            
-                return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
-            }, this);
+            if (this.cachedBindings !== undefined && this.cachedBindings.items === items && this.cachedBindings.length === items.length)
+                return this.cachedBindings.bindings;
+            this.cachedBindings = {
+                items: items,
+                length: items.length,
+                bindings: items.map(function (item, index) {
+                    return new PathObjectBinding(this.source.createNew(this.path.concat(index), item), undefined, this.notifyChange, undefined, this);
+                }, this)
+            };
+            //console.timeEnd(path);
+            return this.cachedBindings.bindings;
         },
         enumerable: true,
         configurable: true
@@ -2586,6 +2599,7 @@ var ArrayParentBinding = (function () {
         if (defaultItem === undefined)
             defaultItem = {};
         items.push(defaultItem);
+        this.clearCache();
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
@@ -2597,6 +2611,7 @@ var ArrayParentBinding = (function () {
         if (index === -1)
             return;
         items.splice(index, 1);
+        this.clearCache();
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
@@ -2609,6 +2624,7 @@ var ArrayParentBinding = (function () {
     };
     ArrayParentBinding.prototype.move = function (x, y) {
         this.splice(y, 0, this.splice(x, 1)[0]);
+        this.clearCache();
         if (this.notifyChange !== undefined)
             this.notifyChange();
     };
@@ -2680,9 +2696,12 @@ var PathParentBinding = (function () {
         get: function () {
             var value = this.source.getValue(this.path);
             //get value - optional call converter
-            return this.valueConverter !== undefined ? this.valueConverter.format(value) : value;
+            var result = this.valueConverter !== undefined ? this.valueConverter.format(value) : value;
+            return result;
         },
         set: function (value) {
+            //var path = this.path.join(".");
+            //console.time(path);
             //check if the value is really changed - strict equality
             var previousValue = this.source.getValue(this.path);
             var convertedValueToBeSet = this.valueConverter !== undefined ? this.valueConverter.parse(value) : value;
@@ -2690,6 +2709,7 @@ var PathParentBinding = (function () {
                 return;
             //set value - optional call converter
             this.source.setValue(this.path, convertedValueToBeSet);
+            //console.timeEnd(path);
             if (this.notifyChange !== undefined)
                 this.notifyChange();
         },
@@ -2723,7 +2743,7 @@ exports.CurryConverter = CurryConverter;
 },{"./utils":10,"_process":5,"buffer":2}],8:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 "use strict";
-var utils_1 = require("./utils");
+var utils_1 = require('./utils');
 /**
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
@@ -2738,9 +2758,8 @@ var PathObjectBinder = (function () {
         // );
     };
     PathObjectBinder.prototype.createNew = function (path, newItem) {
-        var item = utils_1.followRef(this.root, newItem || this.getValue(path));
-        //console.log(item);
-        return new PathObjectBinder(this.root, item);
+        //var item = followRef(this.root, newItem || this.getValue(path));
+        return new PathObjectBinder(this.root, newItem || this.getValue(path));
     };
     PathObjectBinder.prototype.getValue = function (path) {
         if (path === undefined)
@@ -2863,7 +2882,7 @@ exports.isKey = isKey;
 },{"_process":5,"buffer":2}],10:[function(require,module,exports){
 (function (process,global,Buffer,__argument0,__argument1,__argument2,__argument3,__filename,__dirname){
 "use strict";
-var utils_lodash_1 = require("./utils-lodash");
+var utils_lodash_1 = require('./utils-lodash');
 var $ref = "ref";
 function castPath(value, object) {
     if (Array.isArray(value)) {

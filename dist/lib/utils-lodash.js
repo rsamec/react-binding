@@ -1,4 +1,5 @@
 // Copyright JS Foundation and other contributors <https://js.foundation/>
+"use strict";
 // Based on Underscore.js, copyright Jeremy Ashkenas,
 // DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
 // This software consists of voluntary contributions made by many

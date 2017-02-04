@@ -3,9 +3,10 @@ import { IPathObjectBinder, Path } from './DataBinding';
  It wraps getting and setting object properties by setting path expression (dotted path - e.g. "Data.Person.FirstName", "Data.Person.LastName")
  */
 export default class FreezerPathObjectBinder implements IPathObjectBinder {
-    private source;
+    private subSource;
     private root;
-    constructor(rootParams: any, source?: any);
+    constructor(rootParams: any, subSource?: any);
+    private source;
     createNew(path: Path, newItem?: any): IPathObjectBinder;
     subscribe(updateFce: any): void;
     getValue(path?: Path): any;

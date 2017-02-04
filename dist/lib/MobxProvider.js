@@ -1,3 +1,4 @@
+"use strict";
 var utils_1 = require('./utils');
 var mobx_1 = require('mobx');
 /**
@@ -9,8 +10,8 @@ var MobxPathObjectBinder = (function () {
         this.source = source === undefined ? this.root : source;
     }
     MobxPathObjectBinder.prototype.createNew = function (path, newItem) {
-        var item = utils_1.followRef(this.root, newItem || this.getValue(path));
-        return new MobxPathObjectBinder(this.root, item);
+        //var item = followRef(this.root,newItem || this.getValue(path))
+        return new MobxPathObjectBinder(this.root, newItem || this.getValue(path));
     };
     MobxPathObjectBinder.prototype.subscribe = function (updateFce) {
         // var previousState;
@@ -70,6 +71,6 @@ var MobxPathObjectBinder = (function () {
         mobx_1.extendObservable(parent, newProps);
     };
     return MobxPathObjectBinder;
-})();
+}());
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MobxPathObjectBinder;

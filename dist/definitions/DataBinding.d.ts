@@ -103,6 +103,8 @@ export declare class ArrayParentBinding implements ArrayBinding {
     parent: Binding;
     notifyChange: INotifyChange;
     path: Array<string | number>;
+    private cachedBindings;
+    private clearCache();
     private getItems();
     items: Array<IPathObjectBinding>;
     add(defaultItem?: any): void;
